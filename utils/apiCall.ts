@@ -1,0 +1,108 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const API_URL = 'http://localhost:4000/api';
+
+interface ApiCallOptions {
+  endpoint: string;
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  data?: any;
+  params?: Record<string, any>;
+  headers?: Record<string, string>;
+  requireAuth?: boolean;
+}
+
+interface ApiResponse<T = any> {
+  success: boolean;
+  data: T;
+  message?: string;
+  error?: string;
+}
+
+export const apiCall = async <T = any>({
+  endpoint,
+  method = 'GET',
+  data,
+  params,
+  headers = {},
+  requireAuth = true
+}: ApiCallOptions): Promise<ApiResponse<T>> => {
+  try {
+    let url = `${API_URL}${endpoint}`;
+    
+    // Add query parameters if provided
+    if (params && Object.keys(params).length > 0) {
+      const queryString = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          queryString.append(key, String(value));
+        }
+      });
+      url += `?${queryString.toString()}`;
+    }
+
+    // Prepare headers
+    const requestHeaders: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...headers
+    };
+
+    // Add authorization header if required
+    if (requireAuth) {
+      const token = await AsyncStorage.getItem('token');
+      if (token) {
+        requestHeaders['Authorization'] = `Bearer ${token}`;
+      } else {
+        throw new Error('No authentication token found');
+      }
+    }
+
+    // Prepare request options
+    const requestOptions: RequestInit = {
+      method,
+      headers: requestHeaders,
+    };
+
+    // Add body for POST, PUT, PATCH requests
+    if (data && ['POST', 'PUT', 'PATCH'].includes(method)) {
+      requestOptions.body = JSON.stringify(data);
+    }
+
+    // Make the request
+    const response = await fetch(url, requestOptions);
+    const responseData = await response.json();
+
+    if (response.ok) {
+      return {
+        success: true,
+        data: responseData,
+        message: responseData.message
+      };
+    } else {
+      // Handle specific error cases
+      if (response.status === 401) {
+        // Token expired or invalid - could trigger logout
+        await AsyncStorage.removeItem('token');
+        await AsyncStorage.removeItem('user');
+        throw new Error('Đăng nhập đã hết hạn, vui lòng đăng nhập lại để sử dụng toàn bộ tính năng');
+      }
+      
+      throw new Error(responseData.message || responseData.error || `HTTP ${response.status}`);
+    }
+  } catch (error) {
+    console.error('API Call Error:',error);
+    
+    if (error instanceof Error) {
+      return {
+        success: false,
+        data: null as T,
+        error: error.message
+      };
+    }
+    
+    return {
+      success: false,
+      data: null as T,
+      error: 'An unexpected error occurred'
+    };
+  }
+};
