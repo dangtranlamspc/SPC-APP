@@ -1,5 +1,6 @@
 import { useFavourite } from '@/contexts/FavouriteContext';
 import { useNavigation } from '@react-navigation/native';
+import { router } from 'expo-router';
 import React, { JSX, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -54,24 +55,24 @@ const FavouriteScreen: React.FC = () => {
 
   const [removingItems, setRemovingItems] = useState<Set<string>>(new Set());
 
-    const scaleAnim = useRef(new Animated.Value(1)).current;
-  
-    useEffect(() => {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(scaleAnim, {
-            toValue: 1.2, // phóng to
-            duration: 600,
-            useNativeDriver: true,
-          }),
-          Animated.timing(scaleAnim, {
-            toValue: 1, // thu nhỏ lại
-            duration: 600,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
-    }, []);
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.2, // phóng to
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1, // thu nhỏ lại
+          duration: 600,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
 
   useEffect(() => {
     // Load favourites when screen focuses
@@ -124,8 +125,9 @@ const FavouriteScreen: React.FC = () => {
   };
 
   const handleProductPress = (product: FavouriteProduct): void => {
-    navigation.navigate('ProductDetail', { productId: product._id });
+    router.push(`/product/${product._id}`);
   };
+
 
   const renderFavouriteItem: ListRenderItem<FavouriteProduct> = ({ item }) => {
     const isRemoving = removingItems.has(item._id);
@@ -145,7 +147,7 @@ const FavouriteScreen: React.FC = () => {
             resizeMode="cover"
           />
           {item.isMoi && (
-            <Animated.View style={[styles.newBadge, {transform : [{scale: scaleAnim}]}]}>
+            <Animated.View style={[styles.newBadge, { transform: [{ scale: scaleAnim }] }]}>
               <Text style={styles.newText}>MỚI</Text>
             </Animated.View>
           )}
@@ -181,7 +183,7 @@ const FavouriteScreen: React.FC = () => {
           {isRemoving ? (
             <ActivityIndicator size="small" color="#FF6B6B" />
           ) : (
-            <Animated.View style={[{transform : [{scale: scaleAnim}]}]}>
+            <Animated.View style={[{ transform: [{ scale: scaleAnim }] }]}>
               <Icon name="favorite" size={24} color="#FF6B6B" />
             </Animated.View>
           )}
@@ -425,7 +427,7 @@ const styles = StyleSheet.create({
     color: '#666666',
     marginLeft: 4
   },
-    categoryBadge: {
+  categoryBadge: {
     alignSelf: 'flex-start',
     backgroundColor: '#dbeafe',
     paddingHorizontal: 8,

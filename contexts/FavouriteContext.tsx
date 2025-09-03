@@ -35,6 +35,7 @@ interface FavouriteState {
     loading: boolean;
     error: string | null;
     refreshing: boolean;
+    favouriteStatus: Map<string, boolean>;
 };
 
 interface FavouriteContextType extends FavouriteState {
@@ -47,6 +48,7 @@ interface FavouriteContextType extends FavouriteState {
     clearError: () => void;
     resetFavourites: () => void;
     categories: Category[];
+    isFavourite: (productId: string) => boolean;
 };
 
 const initialState: FavouriteState = {
@@ -61,6 +63,7 @@ const initialState: FavouriteState = {
     loading: false,
     error: null,
     refreshing: false,
+    favouriteStatus: new Map(),
 };
 
 const FAVOURITE_ACTIONS = {
@@ -70,6 +73,7 @@ const FAVOURITE_ACTIONS = {
     SET_FAVOURITE_COUNT: 'SET_FAVOURITE_COUNT',
     ADD_FAVOURITE: 'ADD_FAVOURITE',
     REMOVE_FAVOURITE: 'REMOVE_FAVOURITE',
+    UPDATE_FAVOURITE_STATUS: 'UPDATE_FAVOURITE_STATUS',
     SET_ERROR: 'SET_ERROR',
     CLEAR_ERROR: 'CLEAR_ERROR',
     RESET: 'RESET'
@@ -82,6 +86,7 @@ type FavouriteAction =
     | { type: 'SET_FAVOURITE_COUNT'; payload: number }
     | { type: 'ADD_FAVOURITE'; payload: FavouriteProduct }
     | { type: 'REMOVE_FAVOURITE'; payload: string }
+    | { type: 'UPDATE_FAVOURITE_STATUS'; payload: { productId: string; isFavourite: boolean } }
     | { type: 'SET_ERROR'; payload: string }
     | { type: 'CLEAR_ERROR' }
     | { type: 'RESET' };
@@ -122,6 +127,15 @@ const favouriteReducer = (state: FavouriteState, action: FavouriteAction): Favou
                 ...state,
                 favourites: state.favourites.filter(fav => fav._id !== action.payload),
                 favouriteCount: Math.max(0, state.favouriteCount - 1)
+            };
+
+        case FAVOURITE_ACTIONS.UPDATE_FAVOURITE_STATUS:
+            const updatedStatus = new Map(state.favouriteStatus);
+            updatedStatus.set(action.payload.productId, action.payload.isFavourite);
+
+            return {
+                ...state,
+                favouriteStatus: updatedStatus
             };
 
         case FAVOURITE_ACTIONS.SET_ERROR:
@@ -199,6 +213,11 @@ export const FavouriteProvider = ({ children }: { children: ReactNode }) => {
         if (!isLoggedIn || !productId) return null;
 
         try {
+            const currentStatus = state.favouriteStatus.get(productId) || false;
+            dispatch({
+                type: FAVOURITE_ACTIONS.UPDATE_FAVOURITE_STATUS,
+                payload: { productId, isFavourite: !currentStatus }
+            });
             const res = await apiCall<{ message: string, isFavourite: boolean, action: string, favouriteId?: string }>({
                 endpoint: '/favourite/toggle',
                 method: 'POST',
@@ -206,8 +225,16 @@ export const FavouriteProvider = ({ children }: { children: ReactNode }) => {
             });
 
             if (res.success && res.data) {
+                dispatch({
+                    type: FAVOURITE_ACTIONS.UPDATE_FAVOURITE_STATUS,
+                    payload: { productId, isFavourite: res.data.isFavourite }
+                });
                 if (res.data.action === 'added') {
                     await getFavourites(state.pagination.page, state.pagination.limit);
+                    dispatch({
+                        type: FAVOURITE_ACTIONS.SET_FAVOURITE_COUNT,
+                        payload: state.favouriteCount + 1
+                    });
                 } else {
                     dispatch({
                         type: FAVOURITE_ACTIONS.REMOVE_FAVOURITE,
@@ -216,9 +243,18 @@ export const FavouriteProvider = ({ children }: { children: ReactNode }) => {
                 }
                 return res.data;
             } else {
+                dispatch({
+                    type: FAVOURITE_ACTIONS.UPDATE_FAVOURITE_STATUS,
+                    payload: { productId, isFavourite: currentStatus }
+                });
                 throw new Error(res.error || 'Failed to toggle favourite');
             }
         } catch (error) {
+            const currentStatus = state.favouriteStatus.get(productId) || false;
+            dispatch({
+                type: FAVOURITE_ACTIONS.UPDATE_FAVOURITE_STATUS,
+                payload: { productId, isFavourite: currentStatus }
+            });
             console.error('Toggle favourite error:', error);
             const errorMessage = error instanceof Error ? error.message : 'Failed to toggle favourite';
             dispatch({
@@ -277,6 +313,10 @@ export const FavouriteProvider = ({ children }: { children: ReactNode }) => {
         await getFavourites(1, state.pagination.limit, 'createdAt', 'desc', true);
     };
 
+    const isFavourite = (productId: string): boolean => {
+        return state.favouriteStatus.get(productId) || false;
+    };
+
     // Clear error
     const clearError = (): void => {
         dispatch({ type: FAVOURITE_ACTIONS.CLEAR_ERROR });
@@ -307,6 +347,7 @@ export const FavouriteProvider = ({ children }: { children: ReactNode }) => {
         clearError,
         resetFavourites,
         categories,
+        isFavourite
     };
 
     return (

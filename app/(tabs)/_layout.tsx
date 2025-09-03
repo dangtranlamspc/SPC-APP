@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
+import { router, Tabs } from "expo-router";
 import { Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -23,8 +23,8 @@ function FloatingTabBar({ state, descriptors, navigation }: any) {
             options.tabBarLabel !== undefined
               ? options.tabBarLabel
               : options.title !== undefined
-              ? options.title
-              : route.name;
+                ? options.title
+                : route.name;
 
           const isFocused = state.index === index;
 
@@ -58,9 +58,8 @@ function FloatingTabBar({ state, descriptors, navigation }: any) {
                 color={isFocused ? "#2563eb" : "#94a3b8"} // blue-600 vs gray-400
               />
               <Text
-                className={`text-xs ${
-                  isFocused ? "text-blue-600 font-semibold" : "text-gray-400"
-                }`}
+                className={`text-xs ${isFocused ? "text-blue-600 font-semibold" : "text-gray-400"
+                  }`}
               >
                 {label}
               </Text>
@@ -79,7 +78,12 @@ export default function TabLayout() {
       tabBar={(props) => <FloatingTabBar {...props} />}
     >
       <Tabs.Screen name="home" options={{ title: "Home" }} />
-      <Tabs.Screen name="product" options={{ title: "Product" }} />
+      <Tabs.Screen name="product" options={{ title: "Product" }} listeners={{
+        tabPress: (e) => {
+          e.preventDefault();
+          router.replace("/product"); // 👈 luôn reset về index
+        },
+      }} />
       <Tabs.Screen name="favourite" options={{ title: "Favourite" }} />
       <Tabs.Screen name="profile" options={{ title: "Profile" }} />
     </Tabs>

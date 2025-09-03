@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from "expo-secure-store";
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 
-const API_URL = 'http://localhost:4000/api';
+const API_URL = 'https://server-m7ny.onrender.com/api';
 
 interface User {
     id: String;

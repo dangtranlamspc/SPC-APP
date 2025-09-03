@@ -1,10 +1,11 @@
 import CategoryForHome from '@/components/CategoryHome';
+import { CustomDrawer } from '@/components/CustomDrawer';
 import ProductNewComponent from '@/components/ProductCardComponent';
 import SliderComponent from '@/components/SliderComponnent';
 import { useProduct } from '@/contexts/ProductContext';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   RefreshControl,
   SafeAreaView,
@@ -24,6 +25,10 @@ type RootDrawerParamList = {
 type HomeScreenNavigationProp = DrawerNavigationProp<RootDrawerParamList>;
 
 const HomeScreen: React.FC = () => {
+  const [drawerVisible, setDrawerVisible] = useState(false);
+  const handleCloseDrawer = useCallback(() => {
+    setDrawerVisible(false);
+  }, []);
   const {
     refreshNewProducts,
   } = useProduct();
@@ -39,18 +44,29 @@ const HomeScreen: React.FC = () => {
     setRefreshing(false);
   };
 
+    const handleNavigateTo = useCallback((screen: string) => {
+    // Your navigation logic here
+    console.log('Navigating to:', screen);
+    
+    // Example with react-navigation:
+    // navigation.navigate(screen);
+    
+    // Close drawer after navigation
+    setDrawerVisible(false);
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar
         barStyle="dark-content" // "dark-content" (chữ đen), "light-content" (chữ trắng)
         backgroundColor="#fff"  // màu nền cho Android
-        translucent={false}     // false = giữ safe area, true = đè lên nội dung
+        translucent={true}     // false = giữ safe area, true = đè lên nội dung
       />
       <View style={styles.header}>
         {/* Nút 3 gạch mở Drawer */}
         <TouchableOpacity
           style={styles.menuButton}
-          onPress={() => navigation.openDrawer()}
+          onPress={() => setDrawerVisible(true)}
         >
           <Text style={styles.menuIcon}>☰</Text>
         </TouchableOpacity>
@@ -84,11 +100,33 @@ const HomeScreen: React.FC = () => {
 
         <CategoryForHome />
       </ScrollView>
+      {drawerVisible && (
+        <CustomDrawer isOpen={drawerVisible}
+          onClose={handleCloseDrawer}
+          navigateTo={handleNavigateTo} />
+      )}
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  drawer: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 250,
+    backgroundColor: "#fff",
+    paddingTop: 50,
+    paddingHorizontal: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 3, height: 0 },
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  drawerTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 20 },
+  menuItem: { paddingVertical: 12 },
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',

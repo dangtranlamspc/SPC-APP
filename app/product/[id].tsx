@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Dimensions,
     Image,
@@ -11,26 +11,58 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import { useProduct } from '../../contexts/ProductContext';
 
+import HtmlDescription from '@/components/HtmlDescription';
 import { useFavourite } from '@/contexts/FavouriteContext';
+import { useProduct } from '@/contexts/ProductContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import HtmlDescription from '../../components/HtmlDescription';
 
 const { width } = Dimensions.get('window');
-function stripHtml(html: string) {
-    return html.replace(/<[^>]*>?/gm, ""); // bỏ thẻ <p>, <strong>, ...
-}
-
-
 
 export default function ProductDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const { getProduct, toggleFavorite } = useProduct();
-    const {favourites} = useFavourite();
+    const [loading, setLoading] = useState(true);
+    const [product, setProduct] = useState<any>(null);
+    const { favourites } = useFavourite();
     const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0);
 
-    const product = id ? getProduct(id) : undefined;
+
+    useEffect(() => {
+        if (!id) return;
+
+        setLoading(true);
+        setProduct(null); // reset để tránh hiển thị dữ liệu cũ
+
+        // giả sử getProduct có thể async hoặc sync
+        const data = getProduct(id);
+        if (data instanceof Promise) {
+            data.then(p => setProduct(p)).finally(() => setLoading(false));
+        } else {
+            setProduct(data);
+            setLoading(false);
+        }
+    }, [id]);
+
+
+    if (loading) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                        <Ionicons name="arrow-back" size={24} color="#64748b" />
+                    </TouchableOpacity>
+                </View>
+                <View style={styles.notFoundContainer}>
+                    <Text style={styles.notFoundTitle}>Product Not Found</Text>
+                    <Text style={styles.notFoundText}>The product you're looking for doesn't exist.</Text>
+                </View>
+            </SafeAreaView>
+        );
+    }
+
+
+    // const product = id ? getProduct(id) : undefined;
 
     if (!product || !id) {
         return (
@@ -99,7 +131,7 @@ export default function ProductDetailScreen() {
                     style={styles.thumbnailContainer}
                     contentContainerStyle={styles.thumbnailContent}
                 >
-                    {images.map((image, index) => (
+                    {images.map((image: any, index: any) => (
                         <TouchableOpacity
                             key={index}
                             onPress={() => setSelectedImageIndex(index)}
@@ -183,7 +215,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#f8fafc',
-        paddingTop : 50,
+        paddingTop: 50,
     },
 
     // Header Styles

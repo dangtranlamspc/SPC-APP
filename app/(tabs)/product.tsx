@@ -38,9 +38,8 @@ export default function ProductListScreen() {
     setSearchQuery,
     setSelectedCategory,
     setCurrentPage
-  } = useProduct();
 
-  const { toggleFavourite, favourites } = useFavourite();
+  } = useProduct();
 
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
@@ -205,7 +204,24 @@ export default function ProductListScreen() {
 
   // Memoized product card component
   const ProductCard = React.memo(({ item }: { item: Product }) => {
-    const isFavourite = favourites.some(fav => fav._id === item._id);
+    const { toggleFavourite, favourites } = useFavourite();
+    const [localFavouriteState, setLocalFavouriteState] = useState<boolean | null>(null);
+
+    // const isProductFavourite = isFavourite(item._id);
+    // const isFavourite = useMemo(() => {
+    //   return favourites.some(fav => fav._id === item._id);
+    // }, [favourites, item._id]);
+
+    const isFavouriteFromContext = useMemo(() => {
+      return favourites.some(fav => fav._id === item._id);
+    }, [favourites, item._id]);
+
+    const isFavourite = localFavouriteState !== null ? localFavouriteState : isFavouriteFromContext;
+
+    useEffect(() => {
+      setLocalFavouriteState(null);
+    }, [favourites]);
+
     const firstImage = useMemo(() => {
       return Array.isArray(item.images) && item.images.length > 0
         ? (typeof item.images[0] === 'string' ? item.images[0] : item.images[0].url)
@@ -217,15 +233,33 @@ export default function ProductListScreen() {
     }, [item._id]);
 
     const handleFavoritePress = useCallback(async () => {
-      const token = await AsyncStorage.getItem('token');
-      const userData = await AsyncStorage.getItem('user');
-      if (!token && !userData) {
-        router.push('/(auth)/login');
-      } else {
-        toggleFavourite(item._id);
+      try {
+        const token = await AsyncStorage.getItem('token');
+        const userData = await AsyncStorage.getItem('user');
 
+        if (!token && !userData) {
+          router.push('/(auth)/login');
+          return;
+        }
+
+        // Optimistic update - cập nhật local state ngay lập tức
+        const newFavouriteState = !isFavourite;
+        setLocalFavouriteState(newFavouriteState);
+
+        // Gọi API
+        await toggleFavourite(item._id);
+
+        // Sau khi API thành công, reset local state để dùng context
+        setTimeout(() => {
+          setLocalFavouriteState(null);
+        }, 100);
+
+      } catch (error) {
+        console.error('Error toggling favourite:', error);
+        // Revert local state nếu có lỗi
+        setLocalFavouriteState(null);
       }
-    }, [item._id, toggleFavourite]);
+    }, [item._id, toggleFavourite, isFavourite]);
 
     return (
       <TouchableOpacity
@@ -671,7 +705,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 12,
     marginBottom: 8,
-    alignItems : 'center'
+    alignItems: 'center'
   },
 
   categoryBadgeText: {

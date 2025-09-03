@@ -9,7 +9,7 @@ type Category = {
 
 export default function CategoryForHome() {
 
-    const baseUrl = 'http://localhost:4000/api';
+    const baseUrl = 'https://server-m7ny.onrender.com/api';
     const [categories, setCategories] = useState<Category[]>([]);
     const router = useRouter();
 
