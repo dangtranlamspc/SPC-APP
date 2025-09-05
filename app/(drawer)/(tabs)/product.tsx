@@ -3,6 +3,7 @@ import { useProduct } from '@/contexts/ProductContext';
 import { Product } from '@/types/product';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { DrawerActions, useNavigation } from '@react-navigation/native';
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -61,35 +62,68 @@ export default function ProductListScreen() {
   }, []);
 
   const [showSearchBar, setShowSearchBar] = useState<boolean>(false);
-  const [tempSearchQuery, setTempSearchQuery] = useState<string>(searchQuery);
+  const [tempSearchQuery, setTempSearchQuery] = useState<string>('');
 
+  const navigation = useNavigation();
 
-  // Optimized category selection handler
   const handleCategorySelect = useCallback((categoryId: string) => {
     if (selectedCategory !== categoryId) {
       setSelectedCategory(categoryId);
     }
   }, [selectedCategory, setSelectedCategory]);
 
-  const handleSearch = useCallback((): void => {
+
+  // const handleCategorySelect = useCallback(
+  //   (categoryId: string) => {
+  //     if (selectedCategory === categoryId) {
+  //       setSelectedCategory(''); // chọn lại thì bỏ filter
+  //     } else {
+  //       setSelectedCategory(categoryId);
+  //     }
+  //   },
+  //   [selectedCategory, setSelectedCategory]
+  // );
+
+  // const handleSearch = useCallback((): void => {
+  //   setSearchQuery(tempSearchQuery);
+  //   setShowSearchBar(false);
+  // }, [tempSearchQuery, setSearchQuery]);
+
+  const handleSearch = () => {
     setSearchQuery(tempSearchQuery);
     setShowSearchBar(false);
-  }, [tempSearchQuery, setSearchQuery]);
+  }
 
-  const clearSearch = useCallback((): void => {
+  const clearSearch = () => {
     setTempSearchQuery('');
     setSearchQuery('');
-    setShowSearchBar(false);
-  }, [setSearchQuery]);
+  };
 
-  const handleShowSearch = useCallback(() => {
+  const handleShowSearch = () => {
+    setTempSearchQuery(searchQuery || ''); // Đảm bảo không null/undefined
     setShowSearchBar(true);
-  }, []);
+  };
 
-  const handleHideSearch = useCallback(() => {
+  const handleHideSearch = () => {
     setShowSearchBar(false);
-    setTempSearchQuery(searchQuery);
-  }, [searchQuery]);
+    setTempSearchQuery('');
+  };
+
+  // const clearSearch = useCallback((): void => {
+  //   setTempSearchQuery('');
+  //   setSearchQuery('');
+  //   // setShowSearchBar(false);
+  // }, [setSearchQuery]);
+
+  // const handleShowSearch = useCallback(() => {
+  //   setTempSearchQuery(searchQuery)
+  //   setShowSearchBar(true);
+  // }, []);
+
+  // const handleHideSearch = useCallback(() => {
+  //   setShowSearchBar(false);
+  //   setTempSearchQuery('');
+  // }, []);
 
   // Memoized category tab component
   const CategoryTab = React.memo(({ category, isSelected, onPress }: {
@@ -117,8 +151,33 @@ export default function ProductListScreen() {
   ));
 
   // Separate header components to prevent re-renders
-  const HeaderContent = React.memo(() => (
+  // const HeaderContent = React.memo(() => (
+  //   <View style={styles.headerContent}>
+  //     <TouchableOpacity
+  //       style={styles.menuButton}
+  //       onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
+  //     >
+  //       <Text style={styles.menuIcon}>☰</Text>
+  //     </TouchableOpacity>
+  //     <Text style={styles.headerTitle}>Sản phẩm</Text>
+  //     <TouchableOpacity
+  //       onPress={handleShowSearch}
+  //       style={styles.searchIcon}
+  //       activeOpacity={0.7}
+  //     >
+  //       <Ionicons name="search" size={20} color="#64748b" />
+  //     </TouchableOpacity>
+  //   </View>
+  // ));
+
+  const renderHeaderContent = () => (
     <View style={styles.headerContent}>
+      <TouchableOpacity
+        style={styles.menuButton}
+        onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
+      >
+        <Text style={styles.menuIcon}>☰</Text>
+      </TouchableOpacity>
       <Text style={styles.headerTitle}>Sản phẩm</Text>
       <TouchableOpacity
         onPress={handleShowSearch}
@@ -128,9 +187,47 @@ export default function ProductListScreen() {
         <Ionicons name="search" size={20} color="#64748b" />
       </TouchableOpacity>
     </View>
-  ));
+  );
 
-  const SearchBarContent = React.memo(() => (
+  // const SearchBarContent = React.memo(() => (
+  //   <View style={styles.searchContainer}>
+  //     <TouchableOpacity
+  //       onPress={handleHideSearch}
+  //       style={styles.backButton}
+  //       activeOpacity={0.7}
+  //     >
+  //       <Ionicons name="arrow-back" size={24} color="#64748b" />
+  //     </TouchableOpacity>
+  //     <View style={styles.searchInputContainer}>
+  //       <TextInput
+  //         value={tempSearchQuery}
+  //         onChangeText={(text) => {
+  //           console.log('Input changed:', text)
+  //           setTempSearchQuery(text)
+  //         }}
+  //         onSubmitEditing={handleSearch}
+  //         placeholder="Tìm kiếm sản phẩm..."
+  //         style={styles.searchInput}
+  //         returnKeyType='search'
+  //         multiline={false}
+  //         numberOfLines={1}
+  //         autoFocus
+  //       />
+  //       {tempSearchQuery.length ? 0 && (
+  //         <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
+  //           <Ionicons name="close" size={16} color="#94a3b8" />
+  //         </TouchableOpacity>
+  //       ) : null}
+  //     </View>
+
+  //     <TouchableOpacity onPress={handleSearch} style={styles.searchButton}>
+  //       <Text style={styles.searchButtonText}>Tìm kiếm</Text>
+  //     </TouchableOpacity>
+  //   </View>
+  // ));
+
+
+  const renderSearchBar = () => (
     <View style={styles.searchContainer}>
       <TouchableOpacity
         onPress={handleHideSearch}
@@ -142,30 +239,38 @@ export default function ProductListScreen() {
       <View style={styles.searchInputContainer}>
         <TextInput
           value={tempSearchQuery}
-          onChangeText={setTempSearchQuery}
+          onChangeText={setTempSearchQuery} // Đơn giản hóa
           onSubmitEditing={handleSearch}
           placeholder="Tìm kiếm sản phẩm..."
           style={styles.searchInput}
-          autoFocus
+          autoFocus={true}
+          returnKeyType="search"
+          multiline={false}
+          blurOnSubmit={false}
         />
-        {tempSearchQuery ? (
+        {tempSearchQuery.length > 0 && (
           <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
             <Ionicons name="close" size={16} color="#94a3b8" />
           </TouchableOpacity>
-        ) : null}
+        )}
       </View>
-
       <TouchableOpacity onPress={handleSearch} style={styles.searchButton}>
         <Text style={styles.searchButtonText}>Tìm kiếm</Text>
       </TouchableOpacity>
     </View>
-  ));
+  );
 
-  const renderHeader = useCallback(() => (
+  // const renderHeader = useCallback(() => (
+  //   <View style={styles.header}>
+  //     {showSearchBar ? <SearchBarContent /> : <HeaderContent />}
+  //   </View>
+  // ), [showSearchBar]);
+
+  const renderHeader = () => (
     <View style={styles.header}>
-      {showSearchBar ? <SearchBarContent /> : <HeaderContent />}
+      {showSearchBar ? renderSearchBar() : renderHeaderContent()}
     </View>
-  ), [showSearchBar]);
+  );
 
   const renderCategoryTabs = useCallback(() => (
     <ScrollView
@@ -202,7 +307,7 @@ export default function ProductListScreen() {
     );
   }, [searchQuery, totalProducts]);
 
-  // Memoized product card component
+
   const ProductCard = React.memo(({ item }: { item: Product }) => {
     const { toggleFavourite, favourites } = useFavourite();
     const [localFavouriteState, setLocalFavouriteState] = useState<boolean | null>(null);
@@ -528,6 +633,14 @@ const styles = StyleSheet.create({
     minHeight: 60, // Fixed height to prevent jumping
   },
 
+  menuButton: {
+    padding: 8,
+  },
+  menuIcon: {
+    fontSize: 30,
+    color: '#2C3E50',
+  },
+
   categoryContent: {
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -586,8 +699,8 @@ const styles = StyleSheet.create({
   },
   newBadge: {
     position: 'absolute',
-    top: 8,
-    left: 8,
+    top: -8,
+    left: -8,
     backgroundColor: '#FF6B6B',
     borderRadius: 12,          // bo tròn nhiều hơn cho dạng capsule
     paddingHorizontal: 10,     // dài hơn một chút
@@ -607,9 +720,9 @@ const styles = StyleSheet.create({
   // Card Styles
   card: {
     width: CARD_WIDTH,
-    backgroundColor: '#eff1f3ff',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    overflow: 'hidden',
+    padding : 15,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -649,8 +762,8 @@ const styles = StyleSheet.create({
 
   favoriteButton: {
     position: 'absolute',
-    top: 8,
-    right: 8,
+    top: -8,
+    right: -8,
     width: 32,
     height: 32,
     borderRadius: 16,
@@ -688,8 +801,8 @@ const styles = StyleSheet.create({
   },
 
   cardContent: {
-    padding: 12,
-    alignItems: 'center'
+    alignItems: 'center',
+    paddingTop : 10
   },
 
   productName: {

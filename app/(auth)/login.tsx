@@ -32,7 +32,6 @@ export default function LoginPage() {
     // Check token đã lưu chưa
     (async () => {
       const token = await SecureStore.getItemAsync("token");
-      console.log(token);
       if (token) {
         setHasToken(true);
       }
@@ -62,7 +61,7 @@ export default function LoginPage() {
         const token = await SecureStore.getItemAsync("token");
         if (token) {
           Alert.alert("✅ Thành công", "Đăng nhập tự động thành công!");
-          router.push('/(tabs)/home');
+          router.push('/(drawer)/(tabs)/home');
         } else {
           Alert.alert("⚠️ Lỗi", "Không tìm thấy token. Vui lòng đăng nhập lại.");
         }
@@ -98,7 +97,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login(formData.email, formData.password);
-      router.replace('/(tabs)/home');
+      router.replace('/(drawer)/(tabs)/home');
     } catch (error: any) {
       Alert.alert('Lỗi', error.message || 'Đăng nhập thất bại');
     } finally {

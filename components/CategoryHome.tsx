@@ -39,7 +39,7 @@ export default function CategoryForHome() {
 
     return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Danh Mục Sản Phẩm</Text>
+      <Text style={styles.sectionTitle}>Danh mục sản phẩm</Text>
       <FlatList
         data={categories}
         keyExtractor={(item) => item._id}

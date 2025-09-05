@@ -2,22 +2,27 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
+    Animated,
     Dimensions,
     Image,
+    Modal,
     SafeAreaView,
     ScrollView,
+    StatusBar,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
 
 import HtmlDescription from '@/components/HtmlDescription';
 import { useFavourite } from '@/contexts/FavouriteContext';
 import { useProduct } from '@/contexts/ProductContext';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 export default function ProductDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -26,6 +31,11 @@ export default function ProductDetailScreen() {
     const [product, setProduct] = useState<any>(null);
     const { favourites } = useFavourite();
     const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0);
+
+    const [isImageModalVisible, setIsImageModalVisible] = useState(false);
+    const [modalImageIndex, setModalImageIndex] = useState(0);
+
+
 
 
     useEffect(() => {
@@ -44,6 +54,94 @@ export default function ProductDetailScreen() {
         }
     }, [id]);
 
+    const scale = useSharedValue(1);
+    const translateX = useSharedValue(0);
+    const translateY = useSharedValue(0);
+
+    // Reset zoom
+    const resetZoom = () => {
+        scale.value = withTiming(1);
+        translateX.value = withTiming(0);
+        translateY.value = withTiming(0);
+    };
+
+    const openImageModal = (index: number) => {
+        setModalImageIndex(index);
+        setIsImageModalVisible(true);
+        resetZoom();
+    };
+
+    const closeImageModal = () => {
+        setIsImageModalVisible(false);
+        resetZoom();
+    };
+
+    const nextImage = () => {
+        if (modalImageIndex < product.images.length - 1) {
+            setModalImageIndex(modalImageIndex + 1);
+            resetZoom();
+        }
+    };
+
+    const prevImage = () => {
+        if (modalImageIndex > 0) {
+            setModalImageIndex(modalImageIndex - 1);
+            resetZoom();
+        }
+    };
+    // Pinch
+    const pinchGesture = Gesture.Pinch()
+        .onUpdate((event) => {
+            scale.value = Math.max(1, Math.min(event.scale, 4));
+        });
+
+    // Pan
+    const panGesture = Gesture.Pan()
+        .onUpdate((event) => {
+            if (scale.value > 1) {
+                // Nếu đang zoom thì kéo ảnh
+                translateX.value = event.translationX;
+                translateY.value = event.translationY;
+            } else {
+                // Nếu scale=1 thì vuốt để chuyển ảnh
+                translateX.value = event.translationX;
+            }
+        })
+        .onEnd((event) => {
+            if (scale.value === 1) {
+                if (event.translationX < -100) {
+                    runOnJS(nextImage)();
+                } else if (event.translationX > 100) {
+                    runOnJS(prevImage)();
+                }
+            }
+            translateX.value = withTiming(0);
+            translateY.value = withTiming(0);
+        });
+
+    // Double tap
+    const doubleTapGesture = Gesture.Tap()
+        .numberOfTaps(2)
+        .onEnd(() => {
+            if (scale.value > 1) {
+                resetZoom();
+            } else {
+                // Zoom in
+                scale.value = withSpring(2.5);
+            }
+        });
+
+    // Combine
+    const composedGesture = Gesture.Simultaneous(pinchGesture, panGesture, doubleTapGesture);
+
+    // Animated style
+    const animatedImageStyle = useAnimatedStyle(() => ({
+        transform: [
+            { scale: scale.value },
+            { translateX: translateX.value },
+            { translateY: translateY.value },
+        ],
+    }));
 
     if (loading) {
         return (
@@ -82,6 +180,7 @@ export default function ProductDetailScreen() {
 
     const images = Array.isArray(product.images) ? product.images : [];
     const currentImage = images[selectedImageIndex] || images[0];
+    const modalImage = images[modalImageIndex];
 
     const renderHeader = () => (
         <View style={styles.header}>
@@ -106,17 +205,20 @@ export default function ProductDetailScreen() {
         </View>
     );
 
+
     const renderImageGallery = () => (
         <View style={styles.imageSection}>
             <View style={styles.mainImageContainer}>
                 {currentImage ? (
-                    <Image
-                        source={{
-                            uri: typeof currentImage === 'string' ? currentImage : currentImage.url
-                        }}
-                        style={styles.mainImage}
-                        resizeMode="cover"
-                    />
+                    <TouchableOpacity onPress={() => openImageModal(selectedImageIndex)}>
+                        <Image
+                            source={{
+                                uri: typeof currentImage === 'string' ? currentImage : currentImage.url
+                            }}
+                            style={styles.mainImage}
+                            resizeMode="cover"
+                        />
+                    </TouchableOpacity>
                 ) : (
                     <View style={styles.placeholderMainImage}>
                         <Ionicons name="image-outline" size={64} color="#94a3b8" />
@@ -147,10 +249,41 @@ export default function ProductDetailScreen() {
                                 style={styles.thumbnailImage}
                                 resizeMode="cover"
                             />
+                            {selectedImageIndex === index && (
+                                <View style={styles.thumbnailActiveIndicator}>
+                                    <Ionicons name="checkmark" size={16} color="#fff" />
+                                </View>
+                            )}
                         </TouchableOpacity>
                     ))}
                 </ScrollView>
             )}
+
+            <Modal visible={isImageModalVisible} transparent animationType="fade">
+                <StatusBar backgroundColor="rgba(0,0,0,0.9)" barStyle="light-content" />
+                <View style={styles.modalContainer}>
+                    {/* Header */}
+                    <View style={styles.modalHeader}>
+                        <TouchableOpacity onPress={closeImageModal} style={styles.modalCloseButton}>
+                            <Ionicons name="close" size={28} color="#fff" />
+                        </TouchableOpacity>
+                        <Text style={styles.modalImageCounter}>
+                            {modalImageIndex + 1} / {images.length}
+                        </Text>
+                    </View>
+
+                    {/* Image with gestures */}
+                    <View style={styles.modalImageContainer}>
+                        <GestureDetector gesture={composedGesture}>
+                            <Animated.Image
+                                source={{ uri: modalImage }}
+                                style={[styles.modalImage, animatedImageStyle]}
+                                resizeMode="contain"
+                            />
+                        </GestureDetector>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 
@@ -250,6 +383,91 @@ const styles = StyleSheet.create({
         color: '#1e293b',
         flex: 1,
         marginHorizontal: 16,
+    },
+
+    modalContainer: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.95)',
+    },
+
+    modalHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        paddingTop: 50,
+        paddingBottom: 16,
+    },
+
+    thumbnailActiveIndicator: {
+        position: 'absolute',
+        top: 4,
+        right: 4,
+        backgroundColor: '#3b82f6',
+        borderRadius: 10,
+        width: 20,
+        height: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+
+    modalCloseButton: {
+        padding: 8,
+        borderRadius: 20,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+    },
+
+    modalImageCounter: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+
+    modalShareButton: {
+        padding: 8,
+        borderRadius: 20,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+    },
+
+    modalImageContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+
+    modalImage: {
+        width: width,
+        height: height * 0.7,
+    },
+
+    modalNavButton: {
+        position: 'absolute',
+        top: '50%',
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        borderRadius: 25,
+        padding: 12,
+        transform: [{ translateY: -25 }],
+    },
+
+    modalPrevButton: {
+        left: 16,
+    },
+
+    modalNextButton: {
+        right: 16,
+    },
+
+    modalFooter: {
+        paddingHorizontal: 16,
+        paddingVertical: 20,
+        alignItems: 'center',
+    },
+
+    modalZoomHint: {
+        color: 'rgba(255,255,255,0.7)',
+        fontSize: 12,
+        textAlign: 'center',
+        fontStyle: 'italic',
     },
 
     searchIcon: {
@@ -454,6 +672,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 8,
         paddingVertical: 3,
         borderRadius: 12,
+        marginBottom: 16,
     },
 
     categoryBadgeText: {

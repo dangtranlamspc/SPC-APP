@@ -21,7 +21,7 @@ export default function IndexPage() {
   // }, [user, isLoading, router]);
 
   return (
-    <Redirect href="/(tabs)/home" />
+    <Redirect href="/(drawer)/(tabs)/home" />
   );
 }
 

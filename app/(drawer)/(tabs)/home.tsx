@@ -1,3 +1,4 @@
+import BSCTNewComponent from '@/components/BsctNewComponent';
 import CategoryForHome from '@/components/CategoryHome';
 import { CustomDrawer } from '@/components/CustomDrawer';
 import ProductNewComponent from '@/components/ProductCardComponent';
@@ -19,16 +20,18 @@ import {
 
 type RootDrawerParamList = {
   "(tabs)": undefined;
-  "(app)": undefined;
 };
 
 type HomeScreenNavigationProp = DrawerNavigationProp<RootDrawerParamList>;
 
 const HomeScreen: React.FC = () => {
+
   const [drawerVisible, setDrawerVisible] = useState(false);
+
   const handleCloseDrawer = useCallback(() => {
     setDrawerVisible(false);
   }, []);
+
   const {
     refreshNewProducts,
   } = useProduct();
@@ -66,7 +69,7 @@ const HomeScreen: React.FC = () => {
         {/* Nút 3 gạch mở Drawer */}
         <TouchableOpacity
           style={styles.menuButton}
-          onPress={() => setDrawerVisible(true)}
+          onPress={() => navigation.openDrawer()}
         >
           <Text style={styles.menuIcon}>☰</Text>
         </TouchableOpacity>
@@ -99,6 +102,8 @@ const HomeScreen: React.FC = () => {
         <ProductNewComponent />
 
         <CategoryForHome />
+
+        <BSCTNewComponent/>
       </ScrollView>
       {drawerVisible && (
         <CustomDrawer isOpen={drawerVisible}
@@ -135,7 +140,7 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   menuIcon: {
-    fontSize: 22,
+    fontSize: 30,
     color: '#2C3E50',
   },
   header: {

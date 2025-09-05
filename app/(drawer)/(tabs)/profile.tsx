@@ -4,8 +4,7 @@ import { Text, View } from "react-native";
 
 
 export default function ProfileScreen() {
-  const { user, login, logout } = useAuth();
-  
+  const { user, logout } = useAuth();
 
   return (
     <View className="flex-1 items-center justify-center bg-white">

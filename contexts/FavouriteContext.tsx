@@ -1,5 +1,7 @@
 import { Category } from '@/types/product';
 import { apiCall } from '@/utils/apiCall';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from "expo-secure-store";
 import { createContext, ReactNode, useContext, useEffect, useReducer, useState } from 'react';
 import { useAuth } from "./AuthContext";
 
@@ -173,8 +175,13 @@ export const FavouriteProvider = ({ children }: { children: ReactNode }) => {
         refresh: boolean = false,
 
     ): Promise<void> => {
-        if (!isLoggedIn) return;
 
+        const tokenFromSecure = await SecureStore.getItemAsync('token').catch(() => null);
+        const tokenFromAsync = await AsyncStorage.getItem('token').catch(() => null);
+        if (!isLoggedIn || !user || (!tokenFromSecure && !tokenFromAsync)) {
+            resetFavourites();
+            return;
+        }
         try {
             if (refresh) {
                 dispatch({ type: FAVOURITE_ACTIONS.SET_REFRESHING, payload: true });
@@ -328,13 +335,13 @@ export const FavouriteProvider = ({ children }: { children: ReactNode }) => {
     };
 
     useEffect(() => {
-        if (isLoggedIn) {
+        if (isLoggedIn && user) {
             getFavourites();
             getFavouriteCount();
         } else {
             resetFavourites();
         }
-    }, [isLoggedIn]);
+    }, [isLoggedIn, user]);
 
     const value: FavouriteContextType = {
         ...state,

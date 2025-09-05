@@ -1,8 +1,13 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router } from "expo-router";
-import { Alert } from "react-native";
+import * as SecureStore from "expo-secure-store";
 
 const API_URL = "https://server-m7ny.onrender.com/api";
+
+// let globalLogoutHandler: (() => void) | null = null;
+
+// export const setGlobalLogoutHandler = (handler: () => void) => {
+//   globalLogoutHandler = handler;
+// };
 
 interface ApiCallOptions {
   endpoint: string;
@@ -80,26 +85,25 @@ export const apiCall = async <T = any>({
         message: responseData.message,
       };
     } else {
-      // Handle specific error cases
       if (response.status === 401) {
-        // Token expired or invalid - could trigger logout
+        await SecureStore.deleteItemAsync('token')
         await AsyncStorage.removeItem("token");
         await AsyncStorage.removeItem("user");
-        Alert.alert(
-          "Phiên đăng nhập hết hạn",
-          "Vui lòng đăng nhập lại để sử dụng toàn bộ tính năng",
-          [
-            {
-              text: "OK",
-              onPress: () => {
-                router.push("/(auth)/login");
-              },
-            },
-          ]
-        );
-        throw new Error(
-          "Đăng nhập đã hết hạn, vui lòng đăng nhập lại để sử dụng toàn bộ tính năng"
-        );
+        // Alert.alert(
+        //   "Phiên đăng nhập hết hạn",
+        //   "Vui lòng đăng nhập lại để sử dụng toàn bộ tính năng",
+        //   [
+        //     {
+        //       text: "OK",
+        //       onPress: () => {
+        //         router.push("/(auth)/login");
+        //       },
+        //     },
+        //   ]
+        // );
+        // throw new Error(
+        //   "Đăng nhập đã hết hạn, vui lòng đăng nhập lại để sử dụng toàn bộ tính năng"
+        // );
       }
 
       throw new Error(

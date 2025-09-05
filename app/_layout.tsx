@@ -6,7 +6,9 @@ import { SliderProvider } from '@/contexts/SliderContext';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 // import { Text } from 'react-native';
+import { BSCTProvider } from '@/contexts/BsctContext';
 import { Stack } from 'expo-router';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import "../global.css";
 export default function RootLayout() {
   return (
@@ -14,60 +16,15 @@ export default function RootLayout() {
       <ProductProvider>
         <FavouriteProvider>
           <SliderProvider>
-            <StatusBar style="light" />
-            {/* <Drawer
-              screenOptions={{
-                headerShown: false, drawerActiveTintColor: "#007AFF",
-                drawerLabelStyle: {
-                  fontSize: 16,
-                },
-              }}
-            >
-              <Drawer.Screen
-                name="(tabs)"
-                options={{
-                  drawerLabel: "Trang chủ",
-                  drawerIcon: ({ size, color }) => (
-                    <Text style={{ fontSize: size, color }}>🏠</Text>
-                  ),
-                }}
-              />
-              <Drawer.Screen
-                name="(app)"
-                options={{
-                  drawerLabel: "Ứng dụng",
-                  drawerIcon: ({ size, color }) => (
-                    <Text style={{ fontSize: size, color }}>📱</Text>
-                  ),
-                }}
-              />
-              <Drawer.Screen
-                name="(auth)"
-                options={{
-                  drawerLabel: "Đăng nhập",
-                  drawerIcon: ({ size, color }) => (
-                    <Text style={{ fontSize: size, color }}>🔑</Text>
-                  ),
-                }}
-              />
-              <Drawer.Screen
-                name="index"
-                options={{ drawerItemStyle: { display: "none" } }}
-              />
-              <Drawer.Screen
-                name="product/[id]"
-                options={{ drawerItemStyle: { display: "none" } }}
-              />
-              <Drawer.Screen
-                name="productbycategory/[id]"
-                options={{ drawerItemStyle: { display: "none" } }}
-              />
-            </Drawer> */}
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="(auth)" />
-              <Stack.Screen name="(app)" />
-            </Stack>
+            <BSCTProvider>
+              <GestureHandlerRootView style={{flex:1}}>
+                <StatusBar style="light" />
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
+                  <Stack.Screen name="(auth)" />
+                </Stack>
+              </GestureHandlerRootView>
+            </BSCTProvider>
           </SliderProvider>
         </FavouriteProvider>
       </ProductProvider>

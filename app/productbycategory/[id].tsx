@@ -2,7 +2,19 @@
 import { AntDesign } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { FlatList, Image, RefreshControl, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+    ActivityIndicator,
+    Dimensions,
+    FlatList,
+    Image,
+    RefreshControl,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type Product = {
@@ -14,22 +26,28 @@ type Product = {
 };
 
 export default function ProductByCategoryScreen() {
-    const baseUrl = 'http://localhost:4000/api'
+    const baseUrl = 'https://server-m7ny.onrender.com/api'
 
-    const { id } = useLocalSearchParams<{ id: string }>();
+    const { id } = useLocalSearchParams();
     const [products, setProducts] = useState<Product[]>([]);
     const [search, setSearch] = useState("");
     const [refreshing, setRefreshing] = useState(false);
+    const [loading, setLoading] = useState(true);
     const router = useRouter();
+
     const fetchProducts = async () => {
         try {
+            if (!refreshing) setLoading(true);
             const res = await fetch(`${baseUrl}/product/category/${id}?search=${search}`);
             const data = await res.json();
             setProducts(data.data?.products || []);
         } catch (error) {
             console.error("Error fetching products:", error);
+        } finally {
+            setLoading(false);
         }
     };
+
     useEffect(() => {
         fetchProducts();
     }, [id, search]);
@@ -40,163 +58,321 @@ export default function ProductByCategoryScreen() {
         setRefreshing(false);
     };
 
-
-    const renderItem = ({ item }: { item: Product }) => {
-        
+    const renderItem = ({ item, index }: { item: Product; index: number }) => {
         const handleProductPress = () => {
             router.push(`/product/${item._id}`);
         };
+
         return (
             <TouchableOpacity
-                    style={styles.card}
-                    onPress={() => handleProductPress()}
-                    activeOpacity={0.8}
-                  >
-            <View style={styles.card}>
-                <Image
-                    source={{ uri: item.images?.[0] || "https://via.placeholder.com/150" }}
-                    style={styles.image}
-                />
+                style={[
+                    styles.card,
+                    { marginLeft: index % 2 === 0 ? 0 : 8 }
+                ]}
+                onPress={handleProductPress}
+                activeOpacity={0.9}
+            >
+                <View style={styles.imageContainer}>
+                    <Image
+                        source={{ uri: item.images?.[0] || "https://via.placeholder.com/150" }}
+                        style={styles.productImage}
+                        resizeMode="cover"
+                    />
 
-                {/* Badge NEW */}
-                {item.isMoi && (
-                    <View style={styles.badgeNew}>
-                        <Text style={styles.badgeNewText}>Mới</Text>
-                    </View>
-                )}
+                    {/* Gradient overlay */}
+                    <View style={styles.imageOverlay} />
 
-                {/* Tym icon */}
-                <TouchableOpacity style={styles.heartBtn}>
-                    <AntDesign name="heart" size={20} color="red" />
-                </TouchableOpacity>
+                    {/* Badge Mới */}
+                    {item.isMoi && (
+                        <View style={styles.newBadge}>
+                            <Text style={styles.newBadgeText}>MỚI</Text>
+                        </View>
+                    )}
 
-                {/* Name */}
-                <Text style={styles.name} numberOfLines={2}>
-                    {item.name}
-                </Text>
-            </View>
+                    {/* Heart button */}
+                    <TouchableOpacity style={styles.favoriteButton}>
+                        <AntDesign name="hearto" size={16} color="#666" />
+                    </TouchableOpacity>
+                </View>
+
+                {/* Product info */}
+                <View style={styles.productInfo}>
+                    <Text style={styles.productName} numberOfLines={2}>
+                        {item.name}
+                    </Text>
+                </View>
             </TouchableOpacity>
-        )
+        );
+    };
+
+    const renderEmptyState = () => (
+        <View style={styles.emptyContainer}>
+            <AntDesign name="inbox" size={64} color="#ccc" />
+            <Text style={styles.emptyText}>Không tìm thấy sản phẩm nào</Text>
+            <Text style={styles.emptySubText}>Hãy thử tìm kiếm với từ khóa khác</Text>
+        </View>
+    );
+
+    if (loading) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#007AFF" />
+                    <Text style={styles.loadingText}>Đang tải sản phẩm...</Text>
+                </View>
+            </SafeAreaView>
+        );
     }
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
-            <StatusBar
-                barStyle="dark-content" // "dark-content" (chữ đen), "light-content" (chữ trắng)
-                backgroundColor="#fff"  // màu nền cho Android
-                translucent={false}     // false = giữ safe area, true = đè lên nội dung
-            />
-            <View style={{ flex: 1, backgroundColor: "#fff" }}>
-                {/* Header */}
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()}>
-                        <Text style={styles.backText}>←</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Sản phẩm</Text>
-                </View>
+        <SafeAreaView style={styles.container}>
+            <StatusBar barStyle="dark-content" backgroundColor="#fff" translucent={false} />
 
-                {/* Search */}
-                <View style={styles.searchContainer}>
+            {/* Header */}
+            <View style={styles.header}>
+                <TouchableOpacity
+                    style={styles.backButton}
+                    onPress={() => router.back()}
+                    activeOpacity={0.7}
+                >
+                    <AntDesign name="arrowleft" size={24} color="#333" />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Sản phẩm</Text>
+                <View style={styles.headerRight} />
+            </View>
+
+            {/* Search bar */}
+            <View style={styles.searchContainer}>
+                <View style={styles.searchBox}>
+                    <AntDesign name="search1" size={20} color="#999" style={styles.searchIcon} />
                     <TextInput
-                        placeholder="Tìm sản phẩm..."
+                        placeholder="Tìm kiếm sản phẩm..."
                         value={search}
                         onChangeText={setSearch}
                         style={styles.searchInput}
+                        placeholderTextColor="#999"
                     />
+                    {search.length > 0 && (
+                        <TouchableOpacity onPress={() => setSearch("")}>
+                            <AntDesign name="close" size={20} color="#999" />
+                        </TouchableOpacity>
+                    )}
                 </View>
-
-                {/* Products grid */}
-                <FlatList
-                    key={2}
-                    data={products}
-                    keyExtractor={(item) => item._id}
-                    renderItem={renderItem}
-                    numColumns={2}
-                    contentContainerStyle={styles.grid}
-                    showsVerticalScrollIndicator={false}
-                    refreshControl={
-                        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-                    }
-                />
             </View>
+
+            {/* Products grid */}
+            <FlatList
+                data={products}
+                keyExtractor={(item) => item._id}
+                renderItem={renderItem}
+                numColumns={2}
+                contentContainerStyle={styles.gridContainer}
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={handleRefresh}
+                        tintColor="#007AFF"
+                        colors={["#007AFF"]}
+                    />
+                }
+                ListEmptyComponent={renderEmptyState}
+                columnWrapperStyle={styles.row}
+            />
         </SafeAreaView>
     );
 }
 
+const { width, height } = Dimensions.get('window');
+const CARD_WIDTH = (width - 32) / 2;
+
 const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: "#fff",
+    },
+
+    // Loading
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    loadingText: {
+        marginTop: 16,
+        fontSize: 16,
+        color: '#666',
+    },
+
+    // Header
     header: {
         flexDirection: "row",
         alignItems: "center",
-        padding: 12,
+        justifyContent: "space-between",
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        backgroundColor: "#fff",
         borderBottomWidth: 1,
-        borderBottomColor: "#eee",
+        borderBottomColor: "#f0f0f0",
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
     },
-    backText: { fontSize: 20, marginRight: 12 },
-    headerTitle: { fontSize: 18, fontWeight: "600" },
+    backButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: "#f8f9fa",
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    headerTitle: {
+        fontSize: 18,
+        fontWeight: "700",
+        color: "#333",
+        flex: 1,
+        textAlign: 'center',
+    },
+    headerRight: {
+        width: 40,
+    },
 
+    // Search
     searchContainer: {
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        backgroundColor: "#fff",
+    },
+    searchBox: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: "#f8f9fa",
+        borderRadius: 12,
         paddingHorizontal: 12,
-        paddingVertical: 8,
+        height: 44,
+    },
+    searchIcon: {
+        marginRight: 8,
+    },
+    searchInput: {
+        flex: 1,
+        fontSize: 16,
+        color: '#333',
     },
 
-    
-    searchInput: {
-        borderWidth: 1,
-        borderColor: "#ccc",
-        borderRadius: 8,
-        paddingHorizontal: 10,
+    // Grid
+    gridContainer: {
+        padding: 16,
+        paddingBottom: 32,
+    },
+    row: {
+        justifyContent: 'space-between',
+        marginBottom: 16,
+    },
+
+    // Product card
+    card: {
+        width: CARD_WIDTH,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 16,
+        padding: 15,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 4,
+        },
+        shadowOpacity: 0.12,
+        shadowRadius: 8,
+        elevation: 6,
+        marginBottom: 4,
+    },
+
+    imageContainer: {
+        position: 'relative',
+        height: height * 0.25,
+    },
+    productImage: {
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#f0f0f0',
+    },
+    imageOverlay: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
         height: 40,
     },
 
-    grid: {
-        padding: 8,
-    },
-    card: {
-        flex: 1,
-        margin: 6,
-        backgroundColor: "#fff",
-        borderRadius: 12,
-        overflow: "hidden",
-        elevation: 2, // Android shadow
-        shadowColor: "#000", // iOS shadow
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        shadowOffset: { width: 0, height: 2 },
-        position: "relative",
-    },
-    image: {
-        width: "100%",
-        height: 140,
-        borderTopLeftRadius: 12,
-        borderTopRightRadius: 12,
-    },
-    name: {
-        padding: 8,
-        fontSize: 14,
-        fontWeight: "500",
-    },
-
-    badgeNew: {
-        position: "absolute",
+    // Badges and buttons
+    newBadge: {
+        position: 'absolute',
         top: 8,
         left: 8,
-        backgroundColor: "#ff4444",
-        paddingHorizontal: 6,
-        paddingVertical: 2,
-        borderRadius: 6,
+        backgroundColor: '#ff4757',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+        elevation: 2,
+        shadowColor: '#ff4757',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
     },
-    badgeNewText: {
-        color: "#fff",
+    newBadgeText: {
+        color: '#fff',
         fontSize: 10,
-        fontWeight: "700",
+        fontWeight: '700',
+        letterSpacing: 0.5,
     },
 
-    heartBtn: {
-        position: "absolute",
+    favoriteButton: {
+        position: 'absolute',
         top: 8,
         right: 8,
-        backgroundColor: "rgba(255,255,255,0.8)",
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
         borderRadius: 20,
-        padding: 4,
+        padding: 8,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+    },
+
+    // Product info
+    productInfo: {
+        padding: 12,
+        alignItems: 'center'
+    },
+    productName: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#333',
+        lineHeight: 18,
+
+    },
+
+    // Empty state
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingVertical: 80,
+    },
+    emptyText: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#666',
+        marginTop: 16,
+    },
+    emptySubText: {
+        fontSize: 14,
+        color: '#999',
+        marginTop: 4,
+        textAlign: 'center',
     },
 });
