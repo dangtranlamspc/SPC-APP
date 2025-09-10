@@ -74,7 +74,7 @@ const ProductNewComponent: React.FC = () => {
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Sản Phẩm Mới</Text>
         <TouchableOpacity>
-          <Text style={styles.viewAllText}>Xem tất cả</Text>
+          {/* <Text style={styles.viewAllText}>Xem tất cả</Text> */}
         </TouchableOpacity>
       </View>
 
@@ -89,6 +89,7 @@ const ProductNewComponent: React.FC = () => {
           renderItem={renderProductCard}
           keyExtractor={(item) => item._id}
           horizontal
+          scrollEnabled = {false}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.productsList}
           ItemSeparatorComponent={() => <View style={styles.productSeparator} />}

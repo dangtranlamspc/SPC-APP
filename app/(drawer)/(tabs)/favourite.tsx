@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useScrollTabHide } from './_layout';
 
 interface FavouriteProduct {
   _id: string;
@@ -56,6 +57,8 @@ const FavouriteScreen: React.FC = () => {
   const [removingItems, setRemovingItems] = useState<Set<string>>(new Set());
 
   const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const { handleScroll } = useScrollTabHide();
 
   useEffect(() => {
     Animated.loop(
@@ -262,6 +265,8 @@ const FavouriteScreen: React.FC = () => {
         renderEmptyState()
       ) : (
         <FlatList
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
           data={favourites}
           renderItem={renderFavouriteItem}
           keyExtractor={(item) => item._id}

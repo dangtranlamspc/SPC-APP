@@ -21,6 +21,7 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useScrollTabHide } from './_layout';
 
 
 const { width } = Dimensions.get('window');
@@ -43,6 +44,8 @@ export default function ProductListScreen() {
   } = useProduct();
 
   const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const { handleScroll } = useScrollTabHide();
 
   useEffect(() => {
     Animated.loop(
@@ -72,23 +75,6 @@ export default function ProductListScreen() {
     }
   }, [selectedCategory, setSelectedCategory]);
 
-
-  // const handleCategorySelect = useCallback(
-  //   (categoryId: string) => {
-  //     if (selectedCategory === categoryId) {
-  //       setSelectedCategory(''); // chọn lại thì bỏ filter
-  //     } else {
-  //       setSelectedCategory(categoryId);
-  //     }
-  //   },
-  //   [selectedCategory, setSelectedCategory]
-  // );
-
-  // const handleSearch = useCallback((): void => {
-  //   setSearchQuery(tempSearchQuery);
-  //   setShowSearchBar(false);
-  // }, [tempSearchQuery, setSearchQuery]);
-
   const handleSearch = () => {
     setSearchQuery(tempSearchQuery);
     setShowSearchBar(false);
@@ -108,24 +94,6 @@ export default function ProductListScreen() {
     setShowSearchBar(false);
     setTempSearchQuery('');
   };
-
-  // const clearSearch = useCallback((): void => {
-  //   setTempSearchQuery('');
-  //   setSearchQuery('');
-  //   // setShowSearchBar(false);
-  // }, [setSearchQuery]);
-
-  // const handleShowSearch = useCallback(() => {
-  //   setTempSearchQuery(searchQuery)
-  //   setShowSearchBar(true);
-  // }, []);
-
-  // const handleHideSearch = useCallback(() => {
-  //   setShowSearchBar(false);
-  //   setTempSearchQuery('');
-  // }, []);
-
-  // Memoized category tab component
   const CategoryTab = React.memo(({ category, isSelected, onPress }: {
     category: any;
     isSelected: boolean;
@@ -150,25 +118,6 @@ export default function ProductListScreen() {
     </TouchableOpacity>
   ));
 
-  // Separate header components to prevent re-renders
-  // const HeaderContent = React.memo(() => (
-  //   <View style={styles.headerContent}>
-  //     <TouchableOpacity
-  //       style={styles.menuButton}
-  //       onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
-  //     >
-  //       <Text style={styles.menuIcon}>☰</Text>
-  //     </TouchableOpacity>
-  //     <Text style={styles.headerTitle}>Sản phẩm</Text>
-  //     <TouchableOpacity
-  //       onPress={handleShowSearch}
-  //       style={styles.searchIcon}
-  //       activeOpacity={0.7}
-  //     >
-  //       <Ionicons name="search" size={20} color="#64748b" />
-  //     </TouchableOpacity>
-  //   </View>
-  // ));
 
   const renderHeaderContent = () => (
     <View style={styles.headerContent}>
@@ -188,43 +137,6 @@ export default function ProductListScreen() {
       </TouchableOpacity>
     </View>
   );
-
-  // const SearchBarContent = React.memo(() => (
-  //   <View style={styles.searchContainer}>
-  //     <TouchableOpacity
-  //       onPress={handleHideSearch}
-  //       style={styles.backButton}
-  //       activeOpacity={0.7}
-  //     >
-  //       <Ionicons name="arrow-back" size={24} color="#64748b" />
-  //     </TouchableOpacity>
-  //     <View style={styles.searchInputContainer}>
-  //       <TextInput
-  //         value={tempSearchQuery}
-  //         onChangeText={(text) => {
-  //           console.log('Input changed:', text)
-  //           setTempSearchQuery(text)
-  //         }}
-  //         onSubmitEditing={handleSearch}
-  //         placeholder="Tìm kiếm sản phẩm..."
-  //         style={styles.searchInput}
-  //         returnKeyType='search'
-  //         multiline={false}
-  //         numberOfLines={1}
-  //         autoFocus
-  //       />
-  //       {tempSearchQuery.length ? 0 && (
-  //         <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
-  //           <Ionicons name="close" size={16} color="#94a3b8" />
-  //         </TouchableOpacity>
-  //       ) : null}
-  //     </View>
-
-  //     <TouchableOpacity onPress={handleSearch} style={styles.searchButton}>
-  //       <Text style={styles.searchButtonText}>Tìm kiếm</Text>
-  //     </TouchableOpacity>
-  //   </View>
-  // ));
 
 
   const renderSearchBar = () => (
@@ -259,12 +171,6 @@ export default function ProductListScreen() {
       </TouchableOpacity>
     </View>
   );
-
-  // const renderHeader = useCallback(() => (
-  //   <View style={styles.header}>
-  //     {showSearchBar ? <SearchBarContent /> : <HeaderContent />}
-  //   </View>
-  // ), [showSearchBar]);
 
   const renderHeader = () => (
     <View style={styles.header}>
@@ -514,6 +420,8 @@ export default function ProductListScreen() {
         {renderSearchInfo()}
       </View>
       <FlatList
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         data={products}
         renderItem={renderProductCard}
         keyExtractor={keyExtractor}
@@ -722,7 +630,7 @@ const styles = StyleSheet.create({
     width: CARD_WIDTH,
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding : 15,
+    padding: 15,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -802,7 +710,7 @@ const styles = StyleSheet.create({
 
   cardContent: {
     alignItems: 'center',
-    paddingTop : 10
+    paddingTop: 10
   },
 
   productName: {

@@ -7,6 +7,12 @@ module.exports = function (api) {
     ],
     plugins: [
       'react-native-reanimated/plugin',
+      ["babel-plugin-dotenv-import", {
+        "moduleName": "@env",
+        "path": ".env",
+        "safe": false,
+        "allowUndefined": true
+      }]
     ],
   };
 };

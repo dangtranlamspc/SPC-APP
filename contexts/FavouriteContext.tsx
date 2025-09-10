@@ -207,7 +207,7 @@ export const FavouriteProvider = ({ children }: { children: ReactNode }) => {
                 throw new Error(res.error || 'Failed to fetch favourites');
             }
         } catch (error) {
-            console.error('Get favourites error:', error);
+            // console.error('Get favourites error:', error);
             const errorMessage = error instanceof Error ? error.message : 'Failed to fetch favourites';
             dispatch({
                 type: FAVOURITE_ACTIONS.SET_ERROR,

@@ -1,8 +1,7 @@
+import { BASE_URL } from '@env';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from "expo-secure-store";
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
-
-const API_URL = 'https://server-m7ny.onrender.com/api';
 
 interface User {
     id: String;
@@ -19,6 +18,7 @@ interface AuthContextType {
     logout: () => Promise<void>;
     checkAuthStatus: () => Promise<void>;
     clearAllData: () => Promise<void>;
+    changePassword: (oldPassword: string, newPassword: string) => Promise<{ success: boolean, message: string }>
 }
 
 
@@ -52,8 +52,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // setGlobalLogoutHandler(handleGlobalLogout);
     }, [])
 
+    const getAuthToken = async (): Promise<string | null> => {
+        try {
+            const [secureToken, asyncToken] = await Promise.all([
+                SecureStore.getItemAsync('token'),
+                AsyncStorage.getItem('token')
+            ]);
+            return secureToken || asyncToken;
+        } catch (error) {
+            console.error('❌ Get token error:', error);
+            return null;
+        }
+    };
+
     const login = async (email: string, password: string) => {
-        const res = await fetch(`${API_URL}/auth/login`, {
+        const res = await fetch(`${BASE_URL}/auth/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -67,8 +80,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             await SecureStore.setItemAsync('token', data.token);
             await AsyncStorage.setItem('token', data.token);
             await AsyncStorage.setItem('user', JSON.stringify(data.user));
+            console.log(data.user)
             setUser(data.user);
             setIsLoggedIn(true);
+
         } else {
             throw new Error(data.message || 'Đăng nhập thất bại');
         }
@@ -104,7 +119,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const register = async (name: string, email: string, password: string) => {
-        const res = await fetch(`${API_URL}/auth/register`, {
+        const res = await fetch(`${BASE_URL}/auth/register`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -118,6 +133,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             throw new Error(data.message || 'Đăng kí thất bại');
         }
     };
+
 
     const clearAllData = async () => {
         try {
@@ -137,6 +153,53 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
+    const changePassword = async (oldPassword: string, newPassword: string): Promise<{ success: boolean, message: string }> => {
+        try {
+            const token = await getAuthToken();
+            if (!token) {
+                throw new Error('Phiên đăng nhập đã hết hạn');
+            }
+            const res = await fetch(`${BASE_URL}/auth/change-password`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`, // Đảm bảo token còn hạn
+                },
+                body: JSON.stringify({
+                    oldPassword,
+                    newPassword,
+                }),
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                return {
+                    success: true,
+                    message: data.message || "Đổi mật khẩu thành công",
+                }
+            } else {
+                return {
+                    success: false,
+                    message: data.message || "Đổi mật khẩu thất bại"
+                }
+            }
+        } catch (error) {
+            console.error('❌ Change password error:', error);
+
+            if (error instanceof Error) {
+                return {
+                    success: false,
+                    message: error.message
+                };
+            }
+
+            return {
+                success: false,
+                message: 'Không thể kết nối đến máy chủ. Vui lòng thử lại.'
+            };
+        }
+    }
+
     const logout = async () => {
         await clearAllData()
     }
@@ -151,6 +214,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             checkAuthStatus,
             clearAllData,
             isLoggedIn,
+            changePassword,
         }}>
             {children}
         </AuthContext.Provider>

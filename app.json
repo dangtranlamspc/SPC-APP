@@ -3,6 +3,12 @@
     "name": "SPC-APP",
     "slug": "SPC-APP",
     "version": "1.0.0",
+    "notification": {
+      "icon": "./assets/images/react-logo.png",
+      "color": "#ffffff",
+      "androidMode": "default",
+      "androidCollapsedTitle": "#{unread_notifications} new interactions"
+    },
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "spcapp",

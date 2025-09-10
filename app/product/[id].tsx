@@ -35,9 +35,6 @@ export default function ProductDetailScreen() {
     const [isImageModalVisible, setIsImageModalVisible] = useState(false);
     const [modalImageIndex, setModalImageIndex] = useState(0);
 
-
-
-
     useEffect(() => {
         if (!id) return;
 
@@ -470,171 +467,10 @@ const styles = StyleSheet.create({
         fontStyle: 'italic',
     },
 
-    searchIcon: {
-        padding: 8,
-        borderRadius: 20,
-    },
-
     backButton: {
         padding: 8,
         borderRadius: 20,
     },
-
-    favoriteHeaderButton: {
-        padding: 8,
-        borderRadius: 20,
-    },
-
-    // Search Styles
-    searchContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        flex: 1,
-        gap: 8,
-    },
-
-    searchInputContainer: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#f1f5f9',
-        borderRadius: 25,
-        paddingHorizontal: 16,
-        height: 40,
-    },
-
-    searchInput: {
-        flex: 1,
-        fontSize: 16,
-        color: '#1e293b',
-    },
-
-    clearButton: {
-        padding: 4,
-    },
-
-    searchButton: {
-        backgroundColor: '#2563eb',
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
-    },
-
-    searchButtonText: {
-        color: 'white',
-        fontSize: 14,
-        fontWeight: '600',
-    },
-
-    // Category Styles
-    categoryContainer: {
-        backgroundColor: 'white',
-        borderBottomWidth: 1,
-        borderBottomColor: '#e2e8f0',
-    },
-
-    categoryContent: {
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        gap: 8,
-    },
-
-    categoryTab: {
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
-        backgroundColor: '#f1f5f9',
-    },
-
-    categoryTabActive: {
-        backgroundColor: '#2563eb',
-    },
-
-    categoryTabText: {
-        fontSize: 14,
-        fontWeight: '500',
-        color: '#64748b',
-    },
-
-    categoryTabTextActive: {
-        color: 'white',
-    },
-
-    // Search Info
-    searchInfo: {
-        backgroundColor: 'white',
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        borderBottomWidth: 1,
-        borderBottomColor: '#e2e8f0',
-    },
-
-    searchInfoText: {
-        fontSize: 14,
-        color: '#64748b',
-    },
-
-    searchInfoCount: {
-        fontSize: 14,
-        color: '#64748b',
-        fontWeight: '500',
-    },
-
-    // List Styles
-    listContainer: {
-        padding: 12,
-        paddingBottom: 20,
-    },
-
-    row: {
-        justifyContent: 'space-between',
-    },
-
-    // Card Styles
-
-    productImage: {
-        width: '100%',
-        height: '100%',
-    },
-
-    placeholderImage: {
-        width: '100%',
-        height: '100%',
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#e9ecef',
-    },
-
-    placeholderText: {
-        fontSize: 12,
-        color: '#6c757d',
-        fontWeight: '500',
-        marginTop: 4,
-    },
-
-    favoriteButton: {
-        position: 'absolute',
-        top: 8,
-        right: 8,
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
-    },
-
-    favoriteButtonActive: {
-        backgroundColor: '#ef4444',
-    },
-
     ratingBadge: {
         position: 'absolute',
         bottom: 8,
@@ -679,83 +515,6 @@ const styles = StyleSheet.create({
         fontSize: 11,
         fontWeight: '600',
         color: '#1d4ed8',
-    },
-
-    // Loading Styles
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingVertical: 50,
-    },
-
-    loadingText: {
-        marginTop: 16,
-        fontSize: 16,
-        color: '#64748b',
-    },
-
-    // Empty State
-    emptyState: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingVertical: 50,
-    },
-
-    emptyStateTitle: {
-        fontSize: 20,
-        fontWeight: '600',
-        color: '#1e293b',
-        marginTop: 16,
-        marginBottom: 8,
-    },
-
-    emptyStateText: {
-        fontSize: 16,
-        color: '#64748b',
-        textAlign: 'center',
-        paddingHorizontal: 32,
-    },
-
-    // Pagination
-    pagination: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 20,
-        marginTop: 16,
-    },
-
-    paginationButton: {
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        backgroundColor: 'white',
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: '#d1d5db',
-    },
-
-    paginationButtonDisabled: {
-        backgroundColor: '#f9fafb',
-        borderColor: '#e5e7eb',
-    },
-
-    paginationButtonText: {
-        fontSize: 14,
-        fontWeight: '500',
-        color: '#374151',
-    },
-
-    paginationButtonTextDisabled: {
-        color: '#9ca3af',
-    },
-
-    paginationInfo: {
-        fontSize: 14,
-        color: '#64748b',
-        fontWeight: '500',
     },
 
     // Product Detail Styles
@@ -848,46 +607,6 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#1e293b',
         marginBottom: 12,
-    },
-
-    description: {
-        fontSize: 16,
-        color: '#64748b',
-        lineHeight: 24,
-    },
-
-    specifications: {
-        backgroundColor: '#f8fafc',
-        borderRadius: 12,
-        padding: 16,
-    },
-
-    specRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingVertical: 8,
-        borderBottomWidth: 1,
-        borderBottomColor: '#e2e8f0',
-    },
-
-    specKey: {
-        fontSize: 14,
-        color: '#64748b',
-        flex: 1,
-    },
-
-    specValue: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#1e293b',
-        flex: 1,
-        textAlign: 'right',
-    },
-
-    sellerEmail: {
-        fontSize: 16,
-        color: '#64748b',
     },
 
     notFoundContainer: {

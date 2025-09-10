@@ -7,41 +7,41 @@ import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 function CustomDrawerContent(props: any) {
-    const {isLoggedIn, user, logout } = useAuth();
+  const { isLoggedIn, user, logout } = useAuth();
 
-    const router = useRouter();
+  const router = useRouter();
 
-    const handleLogin = () => {
-        props.navigation.closeDrawer();
-        router.push('/(auth)/login');
-    };
+  const handleLogin = () => {
+    props.navigation.closeDrawer();
+    router.push('/(auth)/login');
+  };
 
-    const handleLogout = async () => {
-        Alert.alert(
-            'Đăng xuất',
-            'Bạn có chắc chắn muốn đăng xuất',
-            [
-                { text: 'Huỷ', style: 'cancel' },
-                {
-                    text: 'Đăng xuất',
-                    style: 'destructive',
-                    onPress: async () => {
-                        await logout();
-                        props.navigation.navigate('(tabs)', { screen: 'home' });
-                    }
-                }
-            ]
-        )
-    }
-
-    const handleAccountPress = () => {
-        if (isLoggedIn === true) {
-            props.navigation.navigate('account');
+  const handleLogout = async () => {
+    Alert.alert(
+      'Đăng xuất',
+      'Bạn có chắc chắn muốn đăng xuất',
+      [
+        { text: 'Huỷ', style: 'cancel' },
+        {
+          text: 'Đăng xuất',
+          style: 'destructive',
+          onPress: async () => {
+            await logout();
+            props.navigation.navigate('(tabs)', { screen: 'home' });
+          }
         }
-    }
+      ]
+    )
+  }
 
-    return (
-        <DrawerContentScrollView {...props} style={styles.drawerContent}>
+  const handleAccountPress = () => {
+    if (isLoggedIn === true) {
+      props.navigation.navigate('account');
+    }
+  }
+
+  return (
+    <DrawerContentScrollView {...props} style={styles.drawerContent}>
       {/* User Info Section */}
       <View style={styles.userSection}>
         {isLoggedIn === true ? (
@@ -76,7 +76,7 @@ function CustomDrawerContent(props: any) {
           activeTintColor="#2563eb"
           inactiveTintColor="#666"
         />
-        
+
         <DrawerItem
           label="Bác sĩ cây trồng"
           icon={({ color, size }) => (
@@ -86,15 +86,24 @@ function CustomDrawerContent(props: any) {
           activeTintColor="#2563eb"
           inactiveTintColor="#666"
         />
+        <DrawerItem
+          label="Thư viện"
+          icon={({ color, size }) => (
+            <Ionicons name="cube-outline" size={size} color={color} />
+          )}
+          onPress={() => props.navigation.navigate('thuviens')}
+          activeTintColor="#2563eb"
+          inactiveTintColor="#666"
+        />
 
         {/* Account - Show different text based on login status */}
         <DrawerItem
           label={isLoggedIn === true ? "Tài khoản" : "Đăng nhập"}
           icon={({ color, size }) => (
-            <Ionicons 
-              name={isLoggedIn === true ? "person-circle-outline" : "log-in-outline"} 
-              size={size} 
-              color={color} 
+            <Ionicons
+              name={isLoggedIn === true ? "person-circle-outline" : "log-in-outline"}
+              size={size}
+              color={color}
             />
           )}
           onPress={handleAccountPress}
@@ -133,7 +142,7 @@ function CustomDrawerContent(props: any) {
         </View>
       )}
     </DrawerContentScrollView>
-    )
+  )
 
 }
 
@@ -192,6 +201,13 @@ function DrawerLayoutContent() {
             title: 'BÁC SĨ CÂY TRỒNG',
           }}
         />
+        <Drawer.Screen
+          name="thuviens"
+          options={{
+            drawerItemStyle: { display: 'none' },
+            title: 'THƯ VIỆN',
+          }}
+        />
       </Drawer>
     </GestureHandlerRootView>
   );
@@ -206,11 +222,11 @@ export default function DrawerLayout() {
 }
 
 const styles = StyleSheet.create({
-    container: {
+  container: {
     flex: 1,
     backgroundColor: '#fff',
   },
-  
+
   // Drawer Content Styles
   drawerContent: {
     flex: 1,
@@ -221,7 +237,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#2563eb',
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
-    alignItems : 'center'
+    alignItems: 'center'
   },
   avatar: {
     width: 60,

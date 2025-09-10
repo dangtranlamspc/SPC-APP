@@ -3,7 +3,7 @@ import { BSCT } from "@/types/bsct";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Dimensions, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function BSCTNewComponent() {
     const { getNewBSCTs } = useBSCT();
@@ -11,50 +11,56 @@ export default function BSCTNewComponent() {
 
     useEffect(() => {
         (async () => {
-            const data = await getNewBSCTs(5); // lấy 5 bài viết mới
+            const data = await getNewBSCTs(2); // lấy 5 bài viết mới
             setNewPosts(data);
         })();
     }, []);
 
-    const renderItem = ({ item }: { item: BSCT }) => {
-        return (
-            <TouchableOpacity
-                style={styles.card}
-                onPress={() => router.push(`/bsct/${item._id}`)}
-                activeOpacity={0.8}
-            >
-                <Image
-                    source={{ uri: item.images || "https://via.placeholder.com/150" }}
-                    style={styles.image}
-                />
-                <View style={styles.content}>
-                    <Text numberOfLines={2} style={styles.title}>
-                        {item.title}
-                    </Text>
-                    <View style={styles.meta}>
-                        <Ionicons name="time-outline" size={14} color="#64748b" />
-                        <Text style={styles.date}>
-                            {item.createdAt ? new Date(item.createdAt).toLocaleDateString("vi-VN") : ""}
-                        </Text>
-                    </View>
-                </View>
-            </TouchableOpacity>
-        );
-    };
-
     if (newPosts.length === 0) return null;
 
     return (
+        // <View style={styles.container}>
+        //     <Text style={styles.sectionTitle}>Bài viết mới</Text>
+        //     <FlatList
+        //         data={newPosts}
+        //         nestedScrollEnabled
+        //         renderItem={renderItem}
+        //         keyExtractor={(item) => item._id}
+        //         showsHorizontalScrollIndicator={false}
+        //         contentContainerStyle={{ gap: 12 }}
+        //     />
+        // </View>
         <View style={styles.container}>
             <Text style={styles.sectionTitle}>Bài viết mới</Text>
-            <FlatList
-                data={newPosts}
-                renderItem={renderItem}
-                keyExtractor={(item) => item._id}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ gap: 12 }}
-            />
+            {newPosts.map((item) => (
+                <TouchableOpacity
+                    key={item._id}
+                    style={styles.card}
+                    onPress={() => router.push(`/bsct/${item._id}`)}
+                    activeOpacity={0.8}
+                >
+                    <Image
+                        source={{ uri: item.images || "https://via.placeholder.com/150" }}
+                        style={styles.image}
+                    />
+                    <View style={styles.content}>
+                        <Text numberOfLines={4} style={styles.title}>
+                            {item.title}
+                        </Text>
+                         <Text numberOfLines={6} style={styles.summary}>
+                            {item.summary}
+                        </Text>
+                        <View style={styles.meta}>
+                            <Ionicons name="time-outline" size={14} color="#64748b" />
+                            <Text style={styles.date}>
+                                {item.createdAt
+                                    ? new Date(item.createdAt).toLocaleDateString("vi-VN")
+                                    : ""}
+                            </Text>
+                        </View>
+                    </View>
+                </TouchableOpacity>
+            ))}
         </View>
     );
 }
@@ -69,7 +75,7 @@ const styles = StyleSheet.create({
         fontSize: 20, fontWeight: "bold", marginBottom: 12
     },
     card: {
-        width: width * 1.2,
+        width: '100%',
         backgroundColor: '#fff',
         borderRadius: 12,
         padding: 16,
@@ -84,7 +90,7 @@ const styles = StyleSheet.create({
         elevation: 4,
     },
     image: {
-        width: width * 0.86,
+        width: '100%',
         height: width * 0.55,
         borderRadius: 10,
     },
@@ -92,10 +98,16 @@ const styles = StyleSheet.create({
         padding: 10,
     },
     title: {
-        fontSize: 14,
+        fontSize: 16,
         fontWeight: "600",
         color: "#1e293b",
-        marginBottom: 6,
+        marginBottom: 10,
+    },
+    summary: {
+        fontSize: 14,
+        fontWeight: "500",
+        color: "#1e293b",
+        marginBottom: 10,
     },
     meta: {
         flexDirection: "row",

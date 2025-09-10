@@ -1,7 +1,10 @@
+import { BASE_URL } from '@env';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
 
 const API_URL = "https://server-m7ny.onrender.com/api";
+
+console.log(BASE_URL)
 
 // let globalLogoutHandler: (() => void) | null = null;
 
@@ -34,7 +37,7 @@ export const apiCall = async <T = any>({
   requireAuth = true,
 }: ApiCallOptions): Promise<ApiResponse<T>> => {
   try {
-    let url = `${API_URL}${endpoint}`;
+    let url = `${BASE_URL}${endpoint}`;
 
     // Add query parameters if provided
     if (params && Object.keys(params).length > 0) {
@@ -111,7 +114,24 @@ export const apiCall = async <T = any>({
       );
     }
   } catch (error) {
-    console.error("API Call Error:", error);
+    console.log("API Call Error:", error);
+        // Alert.alert(
+        //   'Thông báo',
+        //   `Đăng nhập của bạn đã hết hạn để sử dụng được tất cả tính năng của ứng dụng hãy đăng nhập lại`,
+        //   [
+        //     {
+        //       text: 'Hủy',
+        //       style: 'cancel'
+        //     },
+        //     {
+        //       text: 'Đăng nhập',
+        //       style: 'destructive',
+        //       onPress: async () => {
+        //         router.push('/(auth)/login')
+        //       }
+        //     }
+        //   ]
+        // );
 
     if (error instanceof Error) {
       return {

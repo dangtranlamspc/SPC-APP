@@ -7,6 +7,8 @@ import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 // import { Text } from 'react-native';
 import { BSCTProvider } from '@/contexts/BsctContext';
+import { NotificationProvider } from '@/contexts/NotificationContext';
+import { ThuVienProvider } from '@/contexts/ThuVienContext';
 import { Stack } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import "../global.css";
@@ -17,13 +19,17 @@ export default function RootLayout() {
         <FavouriteProvider>
           <SliderProvider>
             <BSCTProvider>
-              <GestureHandlerRootView style={{flex:1}}>
-                <StatusBar style="light" />
-                <Stack screenOptions={{ headerShown: false }}>
-                  <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
-                  <Stack.Screen name="(auth)" />
-                </Stack>
-              </GestureHandlerRootView>
+              <ThuVienProvider>
+                <NotificationProvider>
+                  <GestureHandlerRootView style={{ flex: 1 }}>
+                    <StatusBar style="light" />
+                    <Stack screenOptions={{ headerShown: false }}>
+                      <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
+                      <Stack.Screen name="(auth)" />
+                    </Stack>
+                  </GestureHandlerRootView>
+                </NotificationProvider>
+              </ThuVienProvider>
             </BSCTProvider>
           </SliderProvider>
         </FavouriteProvider>

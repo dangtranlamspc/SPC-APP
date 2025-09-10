@@ -24,7 +24,7 @@ export default function Account() {
     };
 
     const handleChangePassword = () => {
-        Alert.alert('Thông báo', 'Chức năng đổi mật khẩu đang phát triển');
+        router.push('/(auth)/change-password')
     };
 
     const handleLogout = () => {
@@ -65,19 +65,19 @@ export default function Account() {
                     <Ionicons name="chevron-forward" size={16} color="#999" />
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.menuItem}>
+                <TouchableOpacity style={styles.menuItem} onPress={() => Alert.alert('Thông báo', 'Chức năng chỉnh sửa hồ sơ đang phát triển')}>
                     <Ionicons name="card-outline" size={20} color="#666" />
                     <Text style={styles.menuText}>Phương thức thanh toán</Text>
                     <Ionicons name="chevron-forward" size={16} color="#999" />
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.menuItem}>
+                <TouchableOpacity style={styles.menuItem} onPress={() => Alert.alert('Thông báo', 'Chức năng chỉnh sửa hồ sơ đang phát triển')}>
                     <Ionicons name="location-outline" size={20} color="#666" />
                     <Text style={styles.menuText}>Địa chỉ giao hàng</Text>
                     <Ionicons name="chevron-forward" size={16} color="#999" />
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.menuItem}>
+                <TouchableOpacity style={styles.menuItem} onPress={() => Alert.alert('Thông báo', 'Chức năng chỉnh sửa hồ sơ đang phát triển')}>
                     <Ionicons name="time-outline" size={20} color="#666" />
                     <Text style={styles.menuText}>Lịch sử đơn hàng</Text>
                     <Ionicons name="chevron-forward" size={16} color="#999" />
