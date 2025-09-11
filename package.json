@@ -67,6 +67,7 @@
     "babel-plugin-dotenv-import": "^3.0.1",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~9.2.0",
+    "expo-module-scripts": "^5.0.7",
     "postcss": "^8.5.6",
     "tailwindcss": "3.3.2",
     "typescript": "~5.8.3"

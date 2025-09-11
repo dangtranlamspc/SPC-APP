@@ -2,9 +2,6 @@ import { BASE_URL } from '@env';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
 
-const API_URL = "https://server-m7ny.onrender.com/api";
-
-console.log(BASE_URL)
 
 // let globalLogoutHandler: (() => void) | null = null;
 

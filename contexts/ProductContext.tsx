@@ -40,7 +40,7 @@ const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
 // API functions
 const api = {
-  baseUrl: 'https://server-m7ny.onrender.com/api', // Replace with your actual API URL
+  baseUrl: 'https://server-dowd.onrender.com/api', // Replace with your actual API URL
 
   async getProducts(params: ApiParams = {}): Promise<ApiResponse> {
     const { page = 1, pageSize = 12, search = '', category = '' } = params;
