@@ -1,7 +1,12 @@
+export interface Image {
+  url: string;
+  imageId: string;
+}
+
 export interface Product {
     _id: string;
     name: string;
-    images: (string | { url: string })[];
+    images: Image[];
     description?: string;
     category?: {
         _id: string;

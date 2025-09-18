@@ -8,6 +8,8 @@ import React from 'react';
 // import { Text } from 'react-native';
 import { BSCTProvider } from '@/contexts/BsctContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
+import { ProductCTGDProvider } from '@/contexts/ProductCTGDContext';
+import { ProductNNDTProvider } from '@/contexts/ProductNNDTContext';
 import { ThuVienProvider } from '@/contexts/ThuVienContext';
 import { Stack } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -21,13 +23,17 @@ export default function RootLayout() {
             <BSCTProvider>
               <ThuVienProvider>
                 <NotificationProvider>
-                  <GestureHandlerRootView style={{ flex: 1 }}>
-                    <StatusBar style="light" />
-                    <Stack screenOptions={{ headerShown: false }}>
-                      <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
-                      <Stack.Screen name="(auth)" />
-                    </Stack>
-                  </GestureHandlerRootView>
+                  <ProductCTGDProvider>
+                    <ProductNNDTProvider>
+                      <GestureHandlerRootView style={{ flex: 1 }}>
+                      <StatusBar style="light" />
+                      <Stack screenOptions={{ headerShown: false }}>
+                        <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
+                        <Stack.Screen name="(auth)" />
+                      </Stack>
+                    </GestureHandlerRootView>
+                    </ProductNNDTProvider>
+                  </ProductCTGDProvider>
                 </NotificationProvider>
               </ThuVienProvider>
             </BSCTProvider>

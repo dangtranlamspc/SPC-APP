@@ -1,19 +1,8 @@
 {
   "expo": {
-    "extra" : {
-      "eas" : {
-        "projectId" : "637ed5b3-97a9-47c1-9dd4-db7bd0e26c22"
-      }
-    },
     "name": "SPC-APP",
     "slug": "SPC-APP",
     "version": "1.0.0",
-    "notification": {
-      "icon": "./assets/images/react-logo.png",
-      "color": "#ffffff",
-      "androidMode": "default",
-      "androidCollapsedTitle": "#{unread_notifications} new interactions"
-    },
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "spcapp",

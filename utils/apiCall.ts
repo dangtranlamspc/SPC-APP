@@ -1,13 +1,7 @@
-import { BASE_URL } from '@env';
+import { BASE_URL } from "@env";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
-
-
-// let globalLogoutHandler: (() => void) | null = null;
-
-// export const setGlobalLogoutHandler = (handler: () => void) => {
-//   globalLogoutHandler = handler;
-// };
+import { clearTokens } from "./tokenManager";
 
 interface ApiCallOptions {
   endpoint: string;
@@ -55,11 +49,29 @@ export const apiCall = async <T = any>({
 
     // Add authorization header if required
     if (requireAuth) {
-      const token = await AsyncStorage.getItem("token");
+      let token = await AsyncStorage.getItem("token");
+
+      if (!token) {
+        try {
+          token = await SecureStore.getItemAsync("token");
+        } catch (error) {
+          console.log("SecureStore token retrieval failed:", error);
+        }
+      }
+
+      // console.log("Token found:", !!token); // Debug log
+
       if (token) {
         requestHeaders["Authorization"] = `Bearer ${token}`;
+        // console.log(
+        //   "Authorization header set with token:",
+        //   token.substring(0, 20) + "..."
+        // ); // Debug log (first 20 chars only)
       } else {
-        throw new Error("No authentication token found");
+        console.log(
+          "No authentication token found in both AsyncStorage and SecureStore"
+        );
+        throw new Error("Authentication required. Please login.");
       }
     }
 
@@ -86,9 +98,15 @@ export const apiCall = async <T = any>({
       };
     } else {
       if (response.status === 401) {
-        await SecureStore.deleteItemAsync('token')
-        await AsyncStorage.removeItem("token");
-        await AsyncStorage.removeItem("user");
+        console.log("401 Unauthorized - but NOT clearing tokens automatically");
+        if (!endpoint.includes("/check/")) {
+          await clearTokens(`401 error from ${endpoint}`);
+        } else {
+          console.log("Skipping token clear for check endpoint");
+        }
+        // await SecureStore.deleteItemAsync("token");
+        // await AsyncStorage.removeItem("token");
+        // await AsyncStorage.removeItem("user");
         // Alert.alert(
         //   "Phiên đăng nhập hết hạn",
         //   "Vui lòng đăng nhập lại để sử dụng toàn bộ tính năng",
@@ -112,23 +130,23 @@ export const apiCall = async <T = any>({
     }
   } catch (error) {
     console.log("API Call Error:", error);
-        // Alert.alert(
-        //   'Thông báo',
-        //   `Đăng nhập của bạn đã hết hạn để sử dụng được tất cả tính năng của ứng dụng hãy đăng nhập lại`,
-        //   [
-        //     {
-        //       text: 'Hủy',
-        //       style: 'cancel'
-        //     },
-        //     {
-        //       text: 'Đăng nhập',
-        //       style: 'destructive',
-        //       onPress: async () => {
-        //         router.push('/(auth)/login')
-        //       }
-        //     }
-        //   ]
-        // );
+    // Alert.alert(
+    //   'Thông báo',
+    //   `Đăng nhập của bạn đã hết hạn để sử dụng được tất cả tính năng của ứng dụng hãy đăng nhập lại`,
+    //   [
+    //     {
+    //       text: 'Hủy',
+    //       style: 'cancel'
+    //     },
+    //     {
+    //       text: 'Đăng nhập',
+    //       style: 'destructive',
+    //       onPress: async () => {
+    //         router.push('/(auth)/login')
+    //       }
+    //     }
+    //   ]
+    // );
 
     if (error instanceof Error) {
       return {

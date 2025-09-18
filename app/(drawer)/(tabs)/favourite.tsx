@@ -1,4 +1,5 @@
 import { useFavourite } from '@/contexts/FavouriteContext';
+import { useProduct } from '@/contexts/ProductContext';
 import { useNavigation } from '@react-navigation/native';
 import { router } from 'expo-router';
 import React, { JSX, useEffect, useRef, useState } from 'react';
@@ -19,18 +20,26 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useScrollTabHide } from './_layout';
 
+interface ProductImage {
+  url: string;
+  imageId: string;
+}
+
 interface FavouriteProduct {
   _id: string;
   name: string;
-  images: (string | { url: string })[];
-  category?: string;
+  images: ProductImage[];
+  category?: {
+    _id: string;
+    name: string;
+  };
   isMoi: boolean;
   average_rating?: number;
   rating_count?: number;
   favouriteId: string;
   favouriteAt: string;
   isFavourite: true;
-
+  productType: 'Product' | 'ProductNongNghiepDoThi' | 'ProductConTrungGiaDung';
 }
 
 type NavigationProp = {
@@ -51,9 +60,9 @@ const FavouriteScreen: React.FC = () => {
     loadMoreFavourites,
     refreshFavourites,
     clearError,
-    categories,
   } = useFavourite();
 
+  const { categories } = useProduct();
   const [removingItems, setRemovingItems] = useState<Set<string>>(new Set());
 
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -86,7 +95,8 @@ const FavouriteScreen: React.FC = () => {
     return unsubscribe;
   }, [navigation, getFavourites]);
 
-  const handleRemoveFavourite = async (productId: string, productName: string): Promise<void> => {
+  const handleRemoveFavourite = async (productId: string, productName: string, productType: 'Product' | 'ProductNongNghiepDoThi' | 'ProductConTrungGiaDung'): Promise<void> => {
+    console.log("Toggle favourite sending:", { productId, productType });
     Alert.alert(
       'Xóa khỏi yêu thích',
       `Bạn có chắc chắn muốn xóa "${productName}" khỏi danh sách yêu thích?`,
@@ -101,7 +111,7 @@ const FavouriteScreen: React.FC = () => {
           onPress: async () => {
             setRemovingItems(prev => new Set([...prev, productId]));
             try {
-              await toggleFavourite(productId);
+              await toggleFavourite(productId, productType);
             } catch (error) {
               Alert.alert('Lỗi', 'Không thể xóa sản phẩm khỏi yêu thích');
             } finally {
@@ -118,8 +128,8 @@ const FavouriteScreen: React.FC = () => {
   };
 
   const getImageUri = (item: FavouriteProduct): string => {
-    if (item.images && item.images.length > 0 && typeof item.images[0] === 'string') {
-      return item.images[0];
+    if (item.images && item.images.length > 0) {
+      return item.images[0].url; // lấy url đầu tiên
     }
     // if (item.image && typeof item.image === 'string') {
     //   return item.image;
@@ -128,7 +138,18 @@ const FavouriteScreen: React.FC = () => {
   };
 
   const handleProductPress = (product: FavouriteProduct): void => {
-    router.push(`/product/${product._id}`);
+    // router.push(`/product/${product._id}`);
+    switch (product.productType) {
+      case 'Product':
+        router.push(`/product/${product._id}`);
+        break;
+      case 'ProductNongNghiepDoThi':
+        router.push(`/nndt/${product._id}`);
+        break;
+      case 'ProductConTrungGiaDung':
+        router.push(`/ctgd/${product._id}`);
+        break;
+    }
   };
 
 
@@ -162,7 +183,7 @@ const FavouriteScreen: React.FC = () => {
           </Text>
           {item.category && (
             <View style={styles.categoryBadge}>
-              <Text style={styles.categoryBadgeText}>{item.category}</Text>
+              <Text style={styles.categoryBadgeText}>{item.category.name}</Text>
             </View>
           )}
           <View style={styles.metaInfo}>
@@ -180,7 +201,7 @@ const FavouriteScreen: React.FC = () => {
 
         <TouchableOpacity
           style={styles.removeButton}
-          onPress={() => handleRemoveFavourite(item._id, item.name)}
+          onPress={() => handleRemoveFavourite(item._id, item.name, item.productType)}
           disabled={isRemoving}
         >
           {isRemoving ? (

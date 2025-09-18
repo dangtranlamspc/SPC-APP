@@ -1,3 +1,4 @@
+import { BASE_URL } from '@env';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { ApiParams, ApiResponse, Category, Product } from '../types/product';
 
@@ -40,7 +41,7 @@ const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
 // API functions
 const api = {
-  baseUrl: 'https://server-dowd.onrender.com/api', // Replace with your actual API URL
+  baseUrl: BASE_URL, // Replace with your actual API URL
 
   async getProducts(params: ApiParams = {}): Promise<ApiResponse> {
     const { page = 1, pageSize = 12, search = '', category = '' } = params;
@@ -281,7 +282,6 @@ export function ProductProvider({ children }: ProductProviderProps) {
     loadProducts,
     loadNewProducts,
     refreshNewProducts,
-
     categoryProducts,
     categoryLoading,
     categoryPagination,

@@ -1,9 +1,8 @@
 import { useFavourite } from '@/contexts/FavouriteContext';
-import { useProduct } from '@/contexts/ProductContext';
-import { Product } from '@/types/product';
+import { useProduct } from '@/contexts/ProductNNDTContext';
+import { NNDT } from '@/types/nndt';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DrawerActions, useNavigation } from '@react-navigation/native';
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -33,12 +32,9 @@ export default function ProductListScreen() {
     loading,
     searchQuery,
     selectedCategory,
-    currentPage,
-    totalPages,
     totalProducts,
     setSearchQuery,
     setSelectedCategory,
-    setCurrentPage
   } = useProduct();
 
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -61,20 +57,19 @@ export default function ProductListScreen() {
     ).start();
   }, []);
 
-  const [showSearchBar, setShowSearchBar] = useState<boolean>(false);
+  // const [showSearchBar, setShowSearchBar] = useState<boolean>(true); // Always show search bar
   const [tempSearchQuery, setTempSearchQuery] = useState<string>('');
 
-  const navigation = useNavigation();
+  // const navigation = useNavigation();
 
-  const handleCategorySelect = useCallback((categoryId: string) => {
-    if (selectedCategory !== categoryId) {
-      setSelectedCategory(categoryId);
+  const handleCategorySelect = useCallback((categoryNNDTId: string) => {
+    if (selectedCategory !== categoryNNDTId) {
+      setSelectedCategory(categoryNNDTId);
     }
   }, [selectedCategory, setSelectedCategory]);
 
   const handleSearch = () => {
     setSearchQuery(tempSearchQuery);
-    setShowSearchBar(false);
   }
 
   const clearSearch = () => {
@@ -82,18 +77,8 @@ export default function ProductListScreen() {
     setSearchQuery('');
   };
 
-  const handleShowSearch = () => {
-    setTempSearchQuery(searchQuery || '');
-    setShowSearchBar(true);
-  };
-
-  const handleHideSearch = () => {
-    setShowSearchBar(false);
-    setTempSearchQuery('');
-  };
-
-  const CategoryTab = React.memo(({ category, isSelected, onPress }: {
-    category: any;
+  const CategoryTab = React.memo(({ categorynndt, isSelected, onPress }: {
+    categorynndt: any;
     isSelected: boolean;
     onPress: () => void;
   }) => (
@@ -111,39 +96,13 @@ export default function ProductListScreen() {
           isSelected && styles.categoryTabTextActive
         ]}
       >
-        {category.name}
+        {categorynndt.name}
       </Text>
     </TouchableOpacity>
   ));
 
-  const renderHeaderContent = () => (
-    <View style={styles.headerContent}>
-      <TouchableOpacity
-        style={styles.menuButton}
-        onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
-      >
-        <Text style={styles.menuIcon}>☰</Text>
-      </TouchableOpacity>
-      <Text style={styles.headerTitle}>Sản phẩm</Text>
-      <TouchableOpacity
-        onPress={handleShowSearch}
-        style={styles.searchIcon}
-        activeOpacity={0.7}
-      >
-        <Ionicons name="search" size={20} color="#64748b" />
-      </TouchableOpacity>
-    </View>
-  );
-
   const renderSearchBar = () => (
     <View style={styles.searchContainer}>
-      <TouchableOpacity
-        onPress={handleHideSearch}
-        style={styles.backButton}
-        activeOpacity={0.7}
-      >
-        <Ionicons name="arrow-back" size={24} color="#64748b" />
-      </TouchableOpacity>
       <View style={styles.searchInputContainer}>
         <TextInput
           value={tempSearchQuery}
@@ -151,26 +110,18 @@ export default function ProductListScreen() {
           onSubmitEditing={handleSearch}
           placeholder="Tìm kiếm sản phẩm..."
           style={styles.searchInput}
-          autoFocus={true}
           returnKeyType="search"
           multiline={false}
-          blurOnSubmit={false}
         />
         {tempSearchQuery.length > 0 && (
           <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
-            <Ionicons name="close" size={16} color="#94a3b8" />
+            <Ionicons name="close" size={20} color="#94a3b8" />
           </TouchableOpacity>
         )}
       </View>
       <TouchableOpacity onPress={handleSearch} style={styles.searchButton}>
         <Text style={styles.searchButtonText}>Tìm kiếm</Text>
       </TouchableOpacity>
-    </View>
-  );
-
-  const renderHeader = () => (
-    <View style={styles.header}>
-      {showSearchBar ? renderSearchBar() : renderHeaderContent()}
     </View>
   );
 
@@ -183,12 +134,12 @@ export default function ProductListScreen() {
       removeClippedSubviews={true}
       keyboardShouldPersistTaps="handled"
     >
-      {categories.map((category) => (
+      {categories.map((categorynndt) => (
         <CategoryTab
-          key={category._id}
-          category={category}
-          isSelected={selectedCategory === category._id}
-          onPress={() => handleCategorySelect(category._id)}
+          key={categorynndt._id}
+          categorynndt={categorynndt}
+          isSelected={selectedCategory === categorynndt._id}
+          onPress={() => handleCategorySelect(categorynndt._id)}
         />
       ))}
     </ScrollView>
@@ -209,25 +160,19 @@ export default function ProductListScreen() {
     );
   }, [searchQuery, totalProducts]);
 
-  const ProductCard = React.memo(({ item }: { item: Product }) => {
-    const { toggleFavourite, isFavourite } = useFavourite();
+  const ProductCard = React.memo(({ item }: { item: NNDT }) => {
+    const { toggleFavourite, favourites } = useFavourite();
     const [localFavouriteState, setLocalFavouriteState] = useState<boolean | null>(null);
 
-    // Get favourite status from context using the isFavourite function
-    const isFavouriteFromContext = isFavourite(item._id);
-    
-    // Use local state if available, otherwise use context
-    const currentFavouriteState = localFavouriteState !== null ? localFavouriteState : isFavouriteFromContext;
+    const isFavouriteFromContext = useMemo(() => {
+      return favourites.some(fav => fav._id === item._id);
+    }, [favourites, item._id]);
 
-    // Reset local state when context updates
+    const isFavourite = localFavouriteState !== null ? localFavouriteState : isFavouriteFromContext;
+
     useEffect(() => {
-      if (localFavouriteState !== null) {
-        const timer = setTimeout(() => {
-          setLocalFavouriteState(null);
-        }, 1000);
-        return () => clearTimeout(timer);
-      }
-    }, [isFavouriteFromContext]);
+      setLocalFavouriteState(null);
+    }, [favourites]);
 
     const firstImage = useMemo(() => {
       return Array.isArray(item.images) && item.images.length > 0
@@ -236,7 +181,7 @@ export default function ProductListScreen() {
     }, [item.images]);
 
     const handleProductPress = useCallback(() => {
-      router.push(`/product/${item._id}`);
+      router.push(`/nndt/${item._id}`);
     }, [item._id]);
 
     const handleFavoritePress = useCallback(async () => {
@@ -249,32 +194,20 @@ export default function ProductListScreen() {
           return;
         }
 
-        // Optimistic update - cập nhật local state ngay lập tức
-        const newFavouriteState = !currentFavouriteState;
+        const newFavouriteState = !isFavourite;
         setLocalFavouriteState(newFavouriteState);
 
-        // Gọi API với productType
-        await toggleFavourite(item._id, 'Product');
+        await toggleFavourite(item._id,'ProductNongNghiepDoThi');
 
-        // Sau khi API thành công, reset local state để dùng context
         setTimeout(() => {
           setLocalFavouriteState(null);
         }, 100);
 
       } catch (error) {
         console.error('Error toggling favourite:', error);
-        
-        // Kiểm tra nếu là lỗi authentication
-        if (error instanceof Error && error.message.includes('Authentication required')) {
-          // Redirect to login
-          router.push('/(auth)/login');
-          return;
-        }
-        
-        // Revert local state nếu có lỗi khác
-        setLocalFavouriteState(currentFavouriteState);
+        setLocalFavouriteState(null);
       }
-    }, [item._id, toggleFavourite, currentFavouriteState]);
+    }, [item._id, toggleFavourite, isFavourite]);
 
     return (
       <TouchableOpacity
@@ -304,13 +237,13 @@ export default function ProductListScreen() {
             onPress={handleFavoritePress}
             style={[
               styles.favoriteButton,
-              currentFavouriteState && styles.favoriteButtonActive
+              isFavourite && styles.favoriteButtonActive
             ]}
           >
             <Ionicons
-              name={currentFavouriteState ? "heart" : "heart-outline"}
+              name={isFavourite ? "heart" : "heart-outline"}
               size={16}
-              color={currentFavouriteState ? "white" : "#64748b"}
+              color={isFavourite ? "white" : "#64748b"}
             />
           </TouchableOpacity>
 
@@ -321,11 +254,10 @@ export default function ProductListScreen() {
             </View>
           )}
         </View>
-
         <View style={styles.cardContent}>
-          {item.category && (
+          {item.categorynndt && (
             <View style={styles.categoryBadge}>
-              <Text style={styles.categoryBadgeText}>{item.category.name}</Text>
+              <Text style={styles.categoryBadgeText}>{item.categorynndt.name}</Text>
             </View>
           )}
           <Text style={styles.productName} numberOfLines={2}>
@@ -336,48 +268,17 @@ export default function ProductListScreen() {
     );
   });
 
-  const renderProductCard = useCallback(({ item }: { item: Product }) => (
+  const renderProductCard = useCallback(({ item }: { item: NNDT }) => (
     <ProductCard item={item} />
   ), []);
-
-  const renderPagination = useCallback(() => {
-    if (totalPages <= 1) return null;
-
-    const handlePrevPage = () => setCurrentPage(Math.max(1, currentPage - 1));
-    const handleNextPage = () => setCurrentPage(Math.min(totalPages, currentPage + 1));
-
-    return (
-      <View style={styles.pagination}>
-        <TouchableOpacity
-          onPress={handlePrevPage}
-          disabled={currentPage === 1}
-          style={[styles.paginationButton, currentPage === 1 && styles.paginationButtonDisabled]}
-        >
-          <Text style={[styles.paginationButtonText, currentPage === 1 && styles.paginationButtonTextDisabled]}>
-            Previous
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={handleNextPage}
-          disabled={currentPage === totalPages}
-          style={[styles.paginationButton, currentPage === totalPages && styles.paginationButtonDisabled]}
-        >
-          <Text style={[styles.paginationButtonText, currentPage === totalPages && styles.paginationButtonTextDisabled]}>
-            Next
-          </Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }, [totalPages, currentPage, setCurrentPage]);
 
   const renderEmptyState = useCallback(() => (
     <View style={styles.emptyState}>
       <Ionicons name="search" size={64} color="#cbd5e1" />
-      <Text style={styles.emptyStateTitle}>No Products Found</Text>
+      <Text style={styles.emptyStateTitle}>Không tìm thấy sản phẩm</Text>
       <Text style={styles.emptyStateText}>
         {searchQuery
-          ? `No products found for "${searchQuery}"`
+          ? `Không tìm thấy sản phẩm cho "${searchQuery}"`
           : "No products available in this category"
         }
       </Text>
@@ -390,13 +291,14 @@ export default function ProductListScreen() {
     index,
   }), []);
 
-  const keyExtractor = useCallback((item: Product) => item._id, []);
+  const keyExtractor = useCallback((item: NNDT) => item._id, []);
 
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
         <View style={styles.headerWrapper}>
-          {renderHeader()}
+          {renderSearchBar()}
           {renderCategoryTabs()}
         </View>
         <View style={styles.loadingContainer}>
@@ -408,14 +310,10 @@ export default function ProductListScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#F8F9FA" }}>
-      <StatusBar
-        barStyle="dark-content"
-        backgroundColor="#F8F9FA"
-        translucent={false}
-      />
+    <SafeAreaView style={[styles.container, { paddingTop: 0 }]}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
       <View style={styles.headerWrapper}>
-        {renderHeader()}
+        {renderSearchBar()}
         {renderCategoryTabs()}
         {renderSearchInfo()}
       </View>
@@ -437,7 +335,7 @@ export default function ProductListScreen() {
         windowSize={10}
         initialNumToRender={6}
         updateCellsBatchingPeriod={50}
-        style={{ flex: 1 }}
+        style={{ flex: 1, backgroundColor: '#F8F9FA' }}
       />
     </SafeAreaView>
   );
@@ -446,67 +344,40 @@ export default function ProductListScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F8F9FA',
   },
 
   // Header Wrapper - Fixed container
   headerWrapper: {
     backgroundColor: '#F8F9FA',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-  },
-
-  // Header Styles
-  header: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: 56,
-  },
-
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    flex: 1,
-  },
-
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2C3E50',
-  },
-
-  searchIcon: {
-    padding: 8,
-    borderRadius: 20,
-  },
-
-  backButton: {
-    padding: 8,
-    borderRadius: 20,
-  },
-
-  favoriteHeaderButton: {
-    padding: 8,
-    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    marginTop: -55
+    // position: 'absolute',
+    // top: 10,
+    // left: 0,
+    // right: 0,
+    // zIndex: 1,
   },
 
   // Search Styles
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
     gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#F8F9FA',
   },
 
   searchInputContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#FFFFFF',
     borderRadius: 25,
     paddingHorizontal: 16,
     height: 40,
@@ -518,15 +389,45 @@ const styles = StyleSheet.create({
     color: '#1e293b',
   },
 
+  cardContent: {
+    alignItems: 'center',
+    paddingTop: 10
+  },
+
+  productName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1a1a1a',
+
+  },
+
+  categoryBadge: {
+    backgroundColor: '#dbeafe',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+    marginBottom: 8,
+    alignItems: 'center'
+  },
+
+  categoryBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#1d4ed8',
+    alignItems: 'center'
+  },
+
   clearButton: {
     padding: 4,
   },
 
   searchButton: {
-    backgroundColor: '#2563eb',
+    backgroundColor: '#4F7AFF',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
+    height: 40,
+    justifyContent: 'center',
   },
 
   searchButtonText: {
@@ -537,16 +438,9 @@ const styles = StyleSheet.create({
 
   // Category Styles
   categoryContainer: {
+    backgroundColor: '#FFFFFF',
     maxHeight: 60,
     minHeight: 60,
-  },
-
-  menuButton: {
-    padding: 8,
-  },
-  menuIcon: {
-    fontSize: 30,
-    color: '#2C3E50',
   },
 
   categoryContent: {
@@ -556,14 +450,17 @@ const styles = StyleSheet.create({
   },
 
   categoryTab: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
     backgroundColor: '#f1f5f9',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
 
   categoryTabActive: {
-    backgroundColor: '#2563eb',
+    backgroundColor: '#4F7AFF',
+    borderColor: '#4F7AFF',
   },
 
   categoryTabText: {
@@ -580,8 +477,11 @@ const styles = StyleSheet.create({
   searchInfo: {
     paddingHorizontal: 16,
     paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
     minHeight: 48,
   },
 
@@ -605,6 +505,7 @@ const styles = StyleSheet.create({
   row: {
     justifyContent: 'space-between',
   },
+
   newBadge: {
     position: 'absolute',
     top: -8,
@@ -618,6 +519,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 2,
   },
+
   newText: {
     color: '#FFFFFF',
     fontSize: 11,
@@ -646,6 +548,8 @@ const styles = StyleSheet.create({
     position: 'relative',
     height: CARD_WIDTH * 1.2,
     backgroundColor: '#e7ebeeff',
+    borderRadius: 8,
+    overflow: 'hidden',
   },
 
   productImage: {
@@ -670,8 +574,8 @@ const styles = StyleSheet.create({
 
   favoriteButton: {
     position: 'absolute',
-    top: -8,
-    right: -8,
+    top: 8,
+    right: 8,
     width: 32,
     height: 32,
     borderRadius: 16,
@@ -706,33 +610,6 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 12,
     fontWeight: '500',
-  },
-
-  cardContent: {
-    alignItems: 'center',
-    paddingTop: 10
-  },
-
-  productName: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#1a1a1a',
-  },
-
-  categoryBadge: {
-    backgroundColor: '#dbeafe',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 12,
-    marginBottom: 8,
-    alignItems: 'center'
-  },
-
-  categoryBadgeText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#1d4ed8',
-    alignItems: 'center'
   },
 
   // Loading Styles
@@ -770,45 +647,5 @@ const styles = StyleSheet.create({
     color: '#64748b',
     textAlign: 'center',
     paddingHorizontal: 32,
-  },
-
-  // Pagination
-  pagination: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 20,
-    marginTop: 16,
-  },
-
-  paginationButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: 'white',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-  },
-
-  paginationButtonDisabled: {
-    backgroundColor: '#f9fafb',
-    borderColor: '#e5e7eb',
-  },
-
-  paginationButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#374151',
-  },
-
-  paginationButtonTextDisabled: {
-    color: '#9ca3af',
-  },
-
-  paginationInfo: {
-    fontSize: 14,
-    color: '#64748b',
-    fontWeight: '500',
   },
 });

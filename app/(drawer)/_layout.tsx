@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import { Drawer } from 'expo-router/drawer';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { useTabVisibility } from "./(tabs)/_layout";
 
 function CustomDrawerContent(props: any) {
   const { isLoggedIn, user, logout } = useAuth();
@@ -76,7 +77,24 @@ function CustomDrawerContent(props: any) {
           activeTintColor="#2563eb"
           inactiveTintColor="#666"
         />
-
+        <DrawerItem
+          label="Nông nghiệp đô thị"
+          icon={({ color, size }) => (
+            <Ionicons name="cube-outline" size={size} color={color} />
+          )}
+          onPress={() => props.navigation.navigate('nndt')}
+          activeTintColor="#2563eb"
+          inactiveTintColor="#666"
+        />
+        <DrawerItem
+          label="Côn trùng gia dụng"
+          icon={({ color, size }) => (
+            <Ionicons name="cube-outline" size={size} color={color} />
+          )}
+          onPress={() => props.navigation.navigate('ctgd')}
+          activeTintColor="#2563eb"
+          inactiveTintColor="#666"
+        />
         <DrawerItem
           label="Bác sĩ cây trồng"
           icon={({ color, size }) => (
@@ -171,6 +189,20 @@ function DrawerLayoutContent() {
             drawerLabel: 'Main App',
             title: 'TRANG CHỦ',
             headerShown: false,
+          }}
+        />
+        <Drawer.Screen
+          name="nndt"
+          options={{
+            drawerItemStyle: { display: 'none' }, // Hidden from drawer menu
+            title: 'NÔNG NGHIỆP ĐÔ THỊ',
+          }}
+        />
+        <Drawer.Screen
+          name="ctgd"
+          options={{
+            drawerItemStyle: { display: 'none' }, // Hidden from drawer menu
+            title: 'CÔN TRÙNG GIA DỤNG',
           }}
         />
         <Drawer.Screen
@@ -307,4 +339,15 @@ const styles = StyleSheet.create({
     color: '#ff4444',
     fontWeight: '500',
   },
-})
+});
+
+export const useScrollTabHide = () => {
+  const context = useTabVisibility();
+  
+  const handleScroll = (event: any) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    context.setScrollOffset(offsetY);
+  };
+
+  return { handleScroll };
+};

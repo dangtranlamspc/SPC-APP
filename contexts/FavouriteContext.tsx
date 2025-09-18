@@ -1,57 +1,79 @@
-import { Category } from '@/types/product';
 import { apiCall } from '@/utils/apiCall';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from "expo-secure-store";
-import { createContext, ReactNode, useContext, useEffect, useReducer, useState } from 'react';
+import { createContext, ReactNode, useContext, useEffect, useReducer } from 'react';
 import { useAuth } from "./AuthContext";
 
-interface Product {
+interface BaseImage {
+    url: string;
+    imageId: string;
+}
+
+interface BaseProduct {
     _id: string;
     name: string;
-    images: (string | { url: string })[];
+    images: BaseImage[];
     description?: string;
-    category?: string;
+    category?: {
+        _id: string;
+        name: string;
+    };
     average_rating?: number;
     rating_count?: number;
     isActive?: boolean;
     isMoi: boolean;
-};
+}
 
-export interface FavouriteProduct extends Product {
+interface BaseFavouriteProduct extends BaseProduct {
     favouriteId: string;
     favouriteAt: string;
     isFavourite: true;
-};
+    productType: 'Product' | 'ProductNongNghiepDoThi' | 'ProductConTrungGiaDung';
+}
+
+// Specific product types (you can define these based on your actual product schemas)
+export interface FavouriteProduct extends BaseFavouriteProduct {
+    productType: 'Product';
+}
+
+export interface FavouriteProductNNDT extends BaseFavouriteProduct {
+    productType: 'ProductNongNghiepDoThi';
+}
+
+export interface FavouriteProductCTGD extends BaseFavouriteProduct {
+    productType: 'ProductConTrungGiaDung';
+}
+
+export type AnyFavouriteProduct = FavouriteProduct | FavouriteProductNNDT | FavouriteProductCTGD;
 
 interface Pagination {
     page: number;
     limit: number;
     total: number;
     pages: number;
-};
+}
 
 interface FavouriteState {
-    favourites: FavouriteProduct[];
+    favourites: AnyFavouriteProduct[];
     favouriteCount: number;
     pagination: Pagination;
     loading: boolean;
     error: string | null;
     refreshing: boolean;
     favouriteStatus: Map<string, boolean>;
-};
+}
 
 interface FavouriteContextType extends FavouriteState {
-    getFavourites: (page?: number, limit?: number, sortBy?: string, sortOrder?: string, refresh?: boolean) => Promise<void>;
-    toggleFavourite: (productId: string) => Promise<{ message: string; isFavourite: boolean; action: string; favouriteId?: string } | null>;
-    checkFavourite: (productId: string) => Promise<boolean>;
-    getFavouriteCount: () => Promise<void>;
+    getFavourites: (page?: number, limit?: number, sortBy?: string, sortOrder?: string, refresh?: boolean, productType?: string) => Promise<void>;
+    toggleFavourite: (productId: string, productType: 'Product' | 'ProductNongNghiepDoThi' | 'ProductConTrungGiaDung') => Promise<{ message: string; isFavourite: boolean; action: string; favouriteId?: string } | null>;
+    checkFavourite: (productId: string, productType: 'Product' | 'ProductNongNghiepDoThi' | 'ProductConTrungGiaDung') => Promise<boolean>;
+    getFavouriteCount: (productType?: string) => Promise<void>;
     loadMoreFavourites: () => Promise<void>;
     refreshFavourites: () => Promise<void>;
     clearError: () => void;
     resetFavourites: () => void;
-    categories: Category[];
     isFavourite: (productId: string) => boolean;
-};
+}
 
 const initialState: FavouriteState = {
     favourites: [],
@@ -84,9 +106,9 @@ const FAVOURITE_ACTIONS = {
 type FavouriteAction =
     | { type: 'SET_LOADING'; payload: boolean }
     | { type: 'SET_REFRESHING'; payload: boolean }
-    | { type: 'SET_FAVOURITES'; payload: { products: FavouriteProduct[]; pagination: Pagination } }
+    | { type: 'SET_FAVOURITES'; payload: { products: AnyFavouriteProduct[]; pagination: Pagination } }
     | { type: 'SET_FAVOURITE_COUNT'; payload: number }
-    | { type: 'ADD_FAVOURITE'; payload: FavouriteProduct }
+    | { type: 'ADD_FAVOURITE'; payload: AnyFavouriteProduct }
     | { type: 'REMOVE_FAVOURITE'; payload: string }
     | { type: 'UPDATE_FAVOURITE_STATUS'; payload: { productId: string; isFavourite: boolean } }
     | { type: 'SET_ERROR'; payload: string }
@@ -101,11 +123,40 @@ const favouriteReducer = (state: FavouriteState, action: FavouriteAction): Favou
         case FAVOURITE_ACTIONS.SET_REFRESHING:
             return { ...state, refreshing: action.payload };
 
+        // case FAVOURITE_ACTIONS.SET_FAVOURITES:
+        //     // Update favouriteStatus map when setting favourites
+        //     const updatedStatusMap = new Map(state.favouriteStatus);
+
+        //     // Set favourite status for loaded products
+        //     action.payload.products.forEach(product => {
+        //         updatedStatusMap.set(product._id, true);
+        //     });
+
+        //     return {
+        //         ...state,
+        //         favourites: action.payload.products,
+        //         pagination: action.payload.pagination,
+        //         favouriteStatus: updatedStatusMap,
+        //         loading: false,
+        //         refreshing: false,
+        //         error: null
+        //     };
         case FAVOURITE_ACTIONS.SET_FAVOURITES:
+            const productsWithType = action.payload.products.map(product => ({
+                ...product,
+                productType: product.productType // Fallback logic nếu cần
+            }));
+
+            const updatedStatusMap = new Map(state.favouriteStatus);
+
+            action.payload.products.forEach(product => {
+                updatedStatusMap.set(product._id, true);
+            });
             return {
                 ...state,
-                favourites: action.payload.products,
+                favourites: productsWithType,
                 pagination: action.payload.pagination,
+                favouriteStatus: updatedStatusMap,
                 loading: false,
                 refreshing: false,
                 error: null
@@ -163,36 +214,42 @@ const FavouriteContext = createContext<FavouriteContextType | undefined>(undefin
 
 export const FavouriteProvider = ({ children }: { children: ReactNode }) => {
     const [state, dispatch] = useReducer(favouriteReducer, initialState);
-    const [categories, setCategories] = useState<Category[]>([]);
     const { user } = useAuth();
     const isLoggedIn = !!user;
 
     const getFavourites = async (
         page: number = 1,
         limit: number = 10,
-        sortBy: string = 'createAt',
+        sortBy: string = 'createdAt',
         sortOrder: string = 'desc',
         refresh: boolean = false,
-
+        productType?: string
     ): Promise<void> => {
-
         const tokenFromSecure = await SecureStore.getItemAsync('token').catch(() => null);
         const tokenFromAsync = await AsyncStorage.getItem('token').catch(() => null);
+
         if (!isLoggedIn || !user || (!tokenFromSecure && !tokenFromAsync)) {
             resetFavourites();
             return;
         }
+
         try {
             if (refresh) {
                 dispatch({ type: FAVOURITE_ACTIONS.SET_REFRESHING, payload: true });
             } else {
-                dispatch({ type: FAVOURITE_ACTIONS.SET_LOADING, payload: true })
+                dispatch({ type: FAVOURITE_ACTIONS.SET_LOADING, payload: true });
             }
 
-            const res = await apiCall<{ products: FavouriteProduct[]; pagination: Pagination }>({
+            const params: Record<string, any> = { page, limit, sortBy, sortOrder };
+            if (productType) {
+                params.productType = productType;
+            }
+
+            const res = await apiCall<{ products: AnyFavouriteProduct[]; pagination: Pagination }>({
                 endpoint: '/favourite',
                 method: 'GET',
-                params: { page, limit, sortBy, sortOrder }
+                params,
+                requireAuth: true // Set to true for authentication
             });
 
             if (res.success && res.data) {
@@ -207,16 +264,18 @@ export const FavouriteProvider = ({ children }: { children: ReactNode }) => {
                 throw new Error(res.error || 'Failed to fetch favourites');
             }
         } catch (error) {
-            // console.error('Get favourites error:', error);
             const errorMessage = error instanceof Error ? error.message : 'Failed to fetch favourites';
             dispatch({
                 type: FAVOURITE_ACTIONS.SET_ERROR,
                 payload: errorMessage
             });
         }
-    }
+    };
 
-    const toggleFavourite = async (productId: string) => {
+    const toggleFavourite = async (
+        productId: string,
+        productType: 'Product' | 'ProductNongNghiepDoThi' | 'ProductConTrungGiaDung'
+    ) => {
         if (!isLoggedIn || !productId) return null;
 
         try {
@@ -225,10 +284,26 @@ export const FavouriteProvider = ({ children }: { children: ReactNode }) => {
                 type: FAVOURITE_ACTIONS.UPDATE_FAVOURITE_STATUS,
                 payload: { productId, isFavourite: !currentStatus }
             });
+
+            // Determine which field to send based on productType
+            const requestData: any = { productType };
+            switch (productType) {
+                case 'Product':
+                    requestData.productId = productId;
+                    break;
+                case 'ProductNongNghiepDoThi':
+                    requestData.productnndtId = productId;
+                    break;
+                case 'ProductConTrungGiaDung':
+                    requestData.productctgdId = productId;
+                    break;
+            }
+
             const res = await apiCall<{ message: string, isFavourite: boolean, action: string, favouriteId?: string }>({
                 endpoint: '/favourite/toggle',
                 method: 'POST',
-                data: { productId },
+                data: requestData,
+                requireAuth: true // Set to true for authentication
             });
 
             if (res.success && res.data) {
@@ -236,6 +311,7 @@ export const FavouriteProvider = ({ children }: { children: ReactNode }) => {
                     type: FAVOURITE_ACTIONS.UPDATE_FAVOURITE_STATUS,
                     payload: { productId, isFavourite: res.data.isFavourite }
                 });
+
                 if (res.data.action === 'added') {
                     await getFavourites(state.pagination.page, state.pagination.limit);
                     dispatch({
@@ -270,15 +346,20 @@ export const FavouriteProvider = ({ children }: { children: ReactNode }) => {
             });
             throw error;
         }
-    }
+    };
 
-    const checkFavourite = async (productId: string): Promise<boolean> => {
+    const checkFavourite = async (
+        productId: string,
+        productType: 'Product' | 'ProductNongNghiepDoThi' | 'ProductConTrungGiaDung'
+    ): Promise<boolean> => {
         if (!isLoggedIn || !productId) return false;
 
         try {
             const response = await apiCall<{ isFavourite: boolean; favouriteId?: string; favouritedAt?: string }>({
                 endpoint: `/favourite/check/${productId}`,
-                method: 'GET'
+                method: 'GET',
+                params: { productType },
+                requireAuth: true // Set to true for authentication
             });
 
             return response.success ? response.data?.isFavourite || false : false;
@@ -288,13 +369,16 @@ export const FavouriteProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const getFavouriteCount = async (): Promise<void> => {
+    const getFavouriteCount = async (productType?: string): Promise<void> => {
         if (!isLoggedIn) return;
 
         try {
+            const params = productType ? { productType } : undefined;
             const response = await apiCall<{ success: boolean; count: number }>({
                 endpoint: '/favourite/count',
-                method: 'GET'
+                method: 'GET',
+                params,
+                requireAuth: true // Set to true for authentication
             });
 
             if (response.success && response.data) {
@@ -315,7 +399,6 @@ export const FavouriteProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    // Refresh favourites
     const refreshFavourites = async (): Promise<void> => {
         await getFavourites(1, state.pagination.limit, 'createdAt', 'desc', true);
     };
@@ -324,12 +407,10 @@ export const FavouriteProvider = ({ children }: { children: ReactNode }) => {
         return state.favouriteStatus.get(productId) || false;
     };
 
-    // Clear error
     const clearError = (): void => {
         dispatch({ type: FAVOURITE_ACTIONS.CLEAR_ERROR });
     };
 
-    // Reset state
     const resetFavourites = (): void => {
         dispatch({ type: FAVOURITE_ACTIONS.RESET });
     };
@@ -353,7 +434,6 @@ export const FavouriteProvider = ({ children }: { children: ReactNode }) => {
         refreshFavourites,
         clearError,
         resetFavourites,
-        categories,
         isFavourite
     };
 
@@ -370,5 +450,4 @@ export const useFavourite = (): FavouriteContextType => {
         throw new Error('useFavourite must be used within a FavouriteProvider');
     }
     return context;
-}
-
+};
