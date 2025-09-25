@@ -15,7 +15,7 @@ export interface CTGD {
   average_rating?: number;
   rating_count?: number;
   images?: ImageCTGD[];
-  categoryctgd?: string | CategoryCTGD;
+  categoryctgd?:CategoryCTGD;
   isActive?: boolean;
   isMoi?: boolean;
   createdAt: string;

@@ -1,21 +1,31 @@
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { ThemeProvider, useTheme } from "@/contexts/ThemeContext";
 import { Ionicons } from "@expo/vector-icons";
 import { DrawerContentScrollView, DrawerItem } from "@react-navigation/drawer";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { Drawer } from 'expo-router/drawer';
+import { useCallback } from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useTabVisibility } from "./(tabs)/_layout";
 
 function CustomDrawerContent(props: any) {
-  const { isLoggedIn, user, logout } = useAuth();
+  const { isLoggedIn, user, logout, checkAuthStatus, isLoading } = useAuth();
+  const { theme, isDark, toggleTheme, themeMode } = useTheme();
 
   const router = useRouter();
+  const currentRoute = props.state.routes[props.state.index].name;
 
   const handleLogin = () => {
     props.navigation.closeDrawer();
     router.push('/(auth)/login');
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      checkAuthStatus();
+    }, [])
+  );
 
   const handleLogout = async () => {
     Alert.alert(
@@ -41,6 +51,22 @@ function CustomDrawerContent(props: any) {
     }
   }
 
+  const isRouteActive = (routeName: string) => {
+    return currentRoute === routeName;
+  };
+
+  const getThemeIcon = () => {
+    if (themeMode === 'system') return isDark ? "phone-portrait" : "phone-portrait-outline";
+    return isDark ? "moon" : "sunny";
+  };
+
+  const getThemeText = () => {
+    if (themeMode === 'system') return 'Hệ thống';
+    return isDark ? 'Chế độ tối' : 'Chế độ sáng';
+  };
+
+  const styles = createStyles(theme);
+
   return (
     <DrawerContentScrollView {...props} style={styles.drawerContent}>
       {/* User Info Section */}
@@ -48,7 +74,7 @@ function CustomDrawerContent(props: any) {
         {isLoggedIn === true ? (
           <>
             <View style={styles.avatar}>
-              <Ionicons name="person" size={24} color="#fff" />
+              <Ionicons name="person" size={24} color={theme.drawerText} />
             </View>
             <Text style={styles.userName}>{user?.name}</Text>
             <Text style={styles.userEmail}>{user?.email}</Text>
@@ -56,7 +82,7 @@ function CustomDrawerContent(props: any) {
         ) : (
           <>
             <View style={styles.avatarGuest}>
-              <Ionicons name="person-outline" size={24} color="#6200ee" />
+              <Ionicons name="person-outline" size={24} color={theme.primary} />
             </View>
             <Text style={styles.guestName}>Khách</Text>
             <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
@@ -71,47 +97,97 @@ function CustomDrawerContent(props: any) {
         <DrawerItem
           label="Trang chủ"
           icon={({ color, size }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
+            <Ionicons
+              name={isRouteActive("(tabs)") ? "home" : "home-outline"}
+              size={size}
+              color={color}
+            />
           )}
           onPress={() => props.navigation.navigate('(tabs)', { screen: 'home' })}
-          activeTintColor="#2563eb"
-          inactiveTintColor="#666"
+          activeTintColor={theme.drawerActiveTint}
+          inactiveTintColor={theme.drawerInactiveTint}
+          focused={isRouteActive("(tabs)")}
+          style={isRouteActive("(tabs)") ? styles.activeDrawerItem : null}
+          labelStyle={[
+            { color: theme.text },
+            isRouteActive("(tabs)") ? styles.activeDrawerLabel : null
+          ]}
         />
         <DrawerItem
           label="Nông nghiệp đô thị"
           icon={({ color, size }) => (
-            <Ionicons name="cube-outline" size={size} color={color} />
+            <Ionicons
+              name={isRouteActive("nndt") ? "leaf" : "leaf-outline"}
+              size={size}
+              color={color}
+            />
           )}
           onPress={() => props.navigation.navigate('nndt')}
-          activeTintColor="#2563eb"
-          inactiveTintColor="#666"
+          activeTintColor={theme.drawerActiveTint}
+          inactiveTintColor={theme.drawerInactiveTint}
+          focused={isRouteActive("nndt")}
+          style={isRouteActive("nndt") ? styles.activeDrawerItem : null}
+          labelStyle={[
+            { color: theme.text },
+            isRouteActive("nndt") ? styles.activeDrawerLabel : null
+          ]}
         />
         <DrawerItem
           label="Côn trùng gia dụng"
           icon={({ color, size }) => (
-            <Ionicons name="cube-outline" size={size} color={color} />
+            <Ionicons
+              name={isRouteActive("ctgd") ? "bug" : "bug-outline"}
+              size={size}
+              color={color}
+            />
           )}
           onPress={() => props.navigation.navigate('ctgd')}
-          activeTintColor="#2563eb"
-          inactiveTintColor="#666"
+          activeTintColor={theme.drawerActiveTint}
+          inactiveTintColor={theme.drawerInactiveTint}
+          focused={isRouteActive("ctgd")}
+          style={isRouteActive("ctgd") ? styles.activeDrawerItem : null}
+          labelStyle={[
+            { color: theme.text },
+            isRouteActive("ctgd") ? styles.activeDrawerLabel : null
+          ]}
         />
         <DrawerItem
           label="Bác sĩ cây trồng"
           icon={({ color, size }) => (
-            <Ionicons name="cube-outline" size={size} color={color} />
+            <Ionicons
+              name={isRouteActive("bsct") ? "medical" : "medical-outline"}
+              size={size}
+              color={color}
+            />
           )}
           onPress={() => props.navigation.navigate('bsct')}
-          activeTintColor="#2563eb"
-          inactiveTintColor="#666"
+          activeTintColor={theme.drawerActiveTint}
+          inactiveTintColor={theme.drawerInactiveTint}
+          focused={isRouteActive("bsct")}
+          style={isRouteActive("bsct") ? styles.activeDrawerItem : null}
+          labelStyle={[
+            { color: theme.text },
+            isRouteActive("bsct") ? styles.activeDrawerLabel : null
+          ]}
         />
         <DrawerItem
           label="Thư viện"
           icon={({ color, size }) => (
-            <Ionicons name="cube-outline" size={size} color={color} />
+            <Ionicons
+              name={isRouteActive("thuviens") ? "library" : "library-outline"}
+              size={size}
+              color={color}
+            />
           )}
           onPress={() => props.navigation.navigate('thuviens')}
-          activeTintColor="#2563eb"
-          inactiveTintColor="#666"
+          activeTintColor={theme.drawerActiveTint}
+          inactiveTintColor={theme.drawerInactiveTint}
+          focused={isRouteActive("thuviens")}
+          style={isRouteActive("thuviens") ? styles.activeDrawerItem : null}
+          labelStyle={[
+            { color: theme.text },
+            isRouteActive("thuviens") ? styles.activeDrawerLabel : null
+          ]}
         />
 
         {/* Account - Show different text based on login status */}
@@ -119,34 +195,79 @@ function CustomDrawerContent(props: any) {
           label={isLoggedIn === true ? "Tài khoản" : "Đăng nhập"}
           icon={({ color, size }) => (
             <Ionicons
-              name={isLoggedIn === true ? "person-circle-outline" : "log-in-outline"}
+              name={isLoggedIn === true
+                ? (isRouteActive("account") ? "person-circle" : "person-circle-outline")
+                : "log-in-outline"
+              }
               size={size}
               color={color}
             />
           )}
           onPress={handleAccountPress}
-          activeTintColor="#2563eb"
-          inactiveTintColor="#666"
+          activeTintColor={theme.drawerActiveTint}
+          inactiveTintColor={theme.drawerInactiveTint}
+          focused={isRouteActive("account")}
+          style={isRouteActive("account") ? styles.activeDrawerItem : null}
+          labelStyle={[
+            { color: theme.text },
+            isRouteActive("account") ? styles.activeDrawerLabel : null
+          ]}
         />
 
         <DrawerItem
           label="Cài đặt"
           icon={({ color, size }) => (
-            <Ionicons name="settings-outline" size={size} color={color} />
+            <Ionicons
+              name={isRouteActive("settings") ? "settings" : "settings-outline"}
+              size={size}
+              color={color}
+            />
           )}
           onPress={() => props.navigation.navigate('settings')}
-          activeTintColor="#2563eb"
-          inactiveTintColor="#666"
+          activeTintColor={theme.drawerActiveTint}
+          inactiveTintColor={theme.drawerInactiveTint}
+          focused={isRouteActive("settings")}
+          style={isRouteActive("settings") ? styles.activeDrawerItem : null}
+          labelStyle={[
+            { color: theme.text },
+            isRouteActive("settings") ? styles.activeDrawerLabel : null
+          ]}
+        />
+
+        {/* Theme Toggle */}
+        <DrawerItem
+          label={getThemeText()}
+          icon={({ color, size }) => (
+            <Ionicons
+              name={getThemeIcon()}
+              size={size}
+              color={color}
+            />
+          )}
+          onPress={toggleTheme}
+          activeTintColor={theme.drawerActiveTint}
+          inactiveTintColor={theme.drawerInactiveTint}
+          labelStyle={{ color: theme.text }}
         />
 
         <DrawerItem
           label="Trợ giúp"
           icon={({ color, size }) => (
-            <Ionicons name="help-circle-outline" size={size} color={color} />
+            <Ionicons
+              name={isRouteActive("support") ? "help-circle" : "help-circle-outline"}
+              size={size}
+              color={color}
+            />
           )}
           onPress={() => props.navigation.navigate('support')}
-          activeTintColor="#2563eb"
-          inactiveTintColor="#666"
+          activeTintColor={theme.drawerActiveTint}
+          inactiveTintColor={theme.drawerInactiveTint}
+          focused={isRouteActive("support")}
+          style={isRouteActive("support") ? styles.activeDrawerItem : null}
+          labelStyle={[
+            { color: theme.text },
+            isRouteActive("support") ? styles.activeDrawerLabel : null
+          ]}
         />
       </View>
 
@@ -154,32 +275,33 @@ function CustomDrawerContent(props: any) {
       {isLoggedIn === true && (
         <View style={styles.logoutSection}>
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Ionicons name="log-out-outline" size={20} color="#ff4444" />
+            <Ionicons name="log-out-outline" size={20} color={theme.error} />
             <Text style={styles.logoutText}>Đăng xuất</Text>
           </TouchableOpacity>
         </View>
       )}
     </DrawerContentScrollView>
   )
-
 }
 
 function DrawerLayoutContent() {
+  const { theme } = useTheme();
+  
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Drawer
         drawerContent={CustomDrawerContent}
         screenOptions={{
           drawerStyle: {
-            backgroundColor: '#fff',
+            backgroundColor: theme.drawerBackground,
             width: 280,
           },
           headerStyle: {
-            backgroundColor: '#2563eb',
+            backgroundColor: theme.headerBackground,
           },
-          headerTintColor: '#fff',
-          drawerActiveTintColor: '#2563eb',
-          drawerInactiveTintColor: '#666',
+          headerTintColor: theme.headerText,
+          drawerActiveTintColor: theme.drawerActiveTint,
+          drawerInactiveTintColor: theme.drawerInactiveTint,
         }}
         initialRouteName="(tabs)"
       >
@@ -194,21 +316,21 @@ function DrawerLayoutContent() {
         <Drawer.Screen
           name="nndt"
           options={{
-            drawerItemStyle: { display: 'none' }, // Hidden from drawer menu
+            drawerItemStyle: { display: 'none' },
             title: 'NÔNG NGHIỆP ĐÔ THỊ',
           }}
         />
         <Drawer.Screen
           name="ctgd"
           options={{
-            drawerItemStyle: { display: 'none' }, // Hidden from drawer menu
+            drawerItemStyle: { display: 'none' },
             title: 'CÔN TRÙNG GIA DỤNG',
           }}
         />
         <Drawer.Screen
           name="account"
           options={{
-            drawerItemStyle: { display: 'none' }, // Hidden from drawer menu
+            drawerItemStyle: { display: 'none' },
             title: 'TÀI KHOẢN',
           }}
         />
@@ -247,35 +369,35 @@ function DrawerLayoutContent() {
 
 export default function DrawerLayout() {
   return (
-    <AuthProvider>
-      <DrawerLayoutContent />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <DrawerLayoutContent />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: theme.background,
   },
-
-  // Drawer Content Styles
   drawerContent: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: theme.drawerBackground,
   },
   userSection: {
     padding: 20,
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.drawerSurface,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: theme.border,
     alignItems: 'center'
   },
   avatar: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.avatarBackground,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
@@ -284,7 +406,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#fff',
+    backgroundColor: theme.buttonBackground,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
@@ -292,28 +414,28 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#fff',
+    color: theme.drawerText,
     marginBottom: 4,
   },
   guestName: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#fff',
+    color: theme.drawerText,
     marginBottom: 8,
   },
   userEmail: {
     fontSize: 14,
-    color: '#e1bee7',
+    color: theme.drawerTextSecondary,
   },
   loginButton: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.buttonBackground,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
     marginTop: 8,
   },
   loginButtonText: {
-    color: '#2563eb',
+    color: theme.buttonText,
     fontWeight: '600',
     fontSize: 14,
     textAlign: 'center',
@@ -325,7 +447,7 @@ const styles = StyleSheet.create({
   logoutSection: {
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: theme.border,
   },
   logoutButton: {
     flexDirection: 'row',
@@ -336,14 +458,23 @@ const styles = StyleSheet.create({
   logoutText: {
     marginLeft: 8,
     fontSize: 16,
-    color: '#ff4444',
+    color: theme.error,
     fontWeight: '500',
+  },
+  activeDrawerItem: {
+    backgroundColor: theme.drawerActiveBackground,
+    borderRadius: 8,
+    marginHorizontal: 8,
+  },
+  activeDrawerLabel: {
+    fontWeight: 'bold',
+    color: theme.drawerActiveTint,
   },
 });
 
 export const useScrollTabHide = () => {
   const context = useTabVisibility();
-  
+
   const handleScroll = (event: any) => {
     const offsetY = event.nativeEvent.contentOffset.y;
     context.setScrollOffset(offsetY);

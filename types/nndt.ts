@@ -15,7 +15,7 @@ export interface NNDT {
   average_rating?: number;
   rating_count?: number;
   images?: ImageNNDT[];
-  categorynndt?: string | CategoryNNDT;
+  categorynndt?:CategoryNNDT;
   isActive?: boolean;
   isMoi?: boolean;
   createdAt: string;

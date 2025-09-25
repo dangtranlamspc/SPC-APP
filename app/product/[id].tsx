@@ -179,6 +179,11 @@ export default function ProductDetailScreen() {
     const currentImage = images[selectedImageIndex] || images[0];
     const modalImage = images[modalImageIndex];
 
+    const getImageUrl = (image: any) => {
+        if (!image) return '';
+        return typeof image === 'string' ? image : image.url || '';
+    };
+
     const renderHeader = () => (
         <View style={styles.header}>
             <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
@@ -209,9 +214,10 @@ export default function ProductDetailScreen() {
                 {currentImage ? (
                     <TouchableOpacity onPress={() => openImageModal(selectedImageIndex)}>
                         <Image
-                            source={{
-                                uri: typeof currentImage === 'string' ? currentImage : currentImage.url
-                            }}
+                            // source={{
+                            //     uri: typeof currentImage === 'string' ? currentImage : currentImage.url
+                            // }}
+                            source={{ uri: getImageUrl(currentImage) }}
                             style={styles.mainImage}
                             resizeMode="cover"
                         />
@@ -240,9 +246,10 @@ export default function ProductDetailScreen() {
                             ]}
                         >
                             <Image
-                                source={{
-                                    uri: typeof image === 'string' ? image : image.url
-                                }}
+                                // source={{
+                                //     uri: typeof image === 'string' ? image : image.url
+                                // }}
+                                source={{ uri: getImageUrl(image) }}
                                 style={styles.thumbnailImage}
                                 resizeMode="cover"
                             />
@@ -273,7 +280,8 @@ export default function ProductDetailScreen() {
                     <View style={styles.modalImageContainer}>
                         <GestureDetector gesture={composedGesture}>
                             <Animated.Image
-                                source={{ uri: modalImage }}
+                                // source={{ uri: modalImage }}
+                                source={{ uri: getImageUrl(modalImage) }}
                                 style={[styles.modalImage, animatedImageStyle]}
                                 resizeMode="contain"
                             />

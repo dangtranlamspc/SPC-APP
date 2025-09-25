@@ -21,6 +21,7 @@ export default function HtmlDescription({ htmlContent, containerStyle }: HtmlDes
     strong: {
       fontWeight: '700',
       color: '#1f2937',
+      textAlign : 'center'
     },
     b: {
       fontWeight: '700',

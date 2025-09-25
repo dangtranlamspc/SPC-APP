@@ -1,3 +1,4 @@
+import { useTheme } from "@/contexts/ThemeContext";
 import { Ionicons } from "@expo/vector-icons";
 import { router, Tabs } from "expo-router";
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
@@ -51,6 +52,8 @@ function TabItem({
   onPress: () => void;
   label: string;
 }) {
+  const { theme } = useTheme();
+  
   let iconName: keyof typeof Ionicons.glyphMap = "home";
   if (route.name === "home") iconName = "home";
   if (route.name === "product") iconName = "pricetags";
@@ -70,14 +73,14 @@ function TabItem({
         <Ionicons
           name={iconName}
           size={26}
-          color={isFocused ? "#2563eb" : "#94a3b8"}
+          color={isFocused ? theme.primary : theme.textSecondary}
         />
       </View>
       
       <Text
         style={{
           fontSize: 12,
-          color: isFocused ? "#2563eb" : "#94a3b8",
+          color: isFocused ? theme.primary : theme.textSecondary,
           fontWeight: isFocused ? "600" : "400",
           opacity: isFocused ? 1 : 0.7,
           transform: [{ scale: isFocused ? 1 : 0.9 }],
@@ -91,6 +94,7 @@ function TabItem({
 
 // ============== FLOATING TAB BAR ==============
 const FloatingTabBar = React.memo(({ state, descriptors, navigation }: any) => {
+  const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   
   const tabBarTranslateY = useSharedValue(0);
@@ -173,6 +177,21 @@ const FloatingTabBar = React.memo(({ state, descriptors, navigation }: any) => {
     };
   });
 
+  // Dynamic shadow style based on theme
+  const shadowStyle = isDark ? {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 12,
+  } : {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
+  };
+
   return (
     <TabVisibilityContext.Provider value={contextValue}>
       <Animated.View
@@ -195,16 +214,17 @@ const FloatingTabBar = React.memo(({ state, descriptors, navigation }: any) => {
               flexDirection: 'row',
               justifyContent: 'space-between',
               alignItems: 'center',
-              backgroundColor: 'white',
+              backgroundColor: theme.card,
               borderRadius: 24,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.1,
-              shadowRadius: 12,
-              elevation: 8,
+              ...shadowStyle,
               paddingHorizontal: 32,
               paddingVertical: 16,
               width: '100%',
+              // Add border for dark theme
+              ...(isDark && {
+                borderWidth: 1,
+                borderColor: theme.border,
+              }),
             }
           ]}
         >
@@ -243,6 +263,7 @@ const FloatingTabBar = React.memo(({ state, descriptors, navigation }: any) => {
           })}
         </Animated.View>
         
+        {/* Active Tab Indicator */}
         <Animated.View
           style={[
             {
@@ -250,8 +271,15 @@ const FloatingTabBar = React.memo(({ state, descriptors, navigation }: any) => {
               top: -4,
               width: 40,
               height: 3,
-              // backgroundColor: '#2563eb',
+              // backgroundColor: theme.primary,
               borderRadius: 2,
+              // Add glow effect for dark theme
+              ...(isDark && {
+                shadowColor: theme.primary,
+                shadowOffset: { width: 0, height: 0 },
+                shadowOpacity: 0.6,
+                shadowRadius: 4,
+              }),
             },
             animatedIndicatorStyle
           ]}

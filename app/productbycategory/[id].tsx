@@ -1,4 +1,5 @@
 // app/productbycategory/[id].tsx
+import { BASE_URL } from '@env';
 import { AntDesign } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -17,16 +18,20 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+type ProductImage = {
+    url: string;
+    imageId: string;
+}
+
 type Product = {
     _id: string;
     name: string;
-    images?: string[];
+    images: ProductImage[];
     isMoi: boolean;
     isActive: boolean;
 };
 
 export default function ProductByCategoryScreen() {
-    const baseUrl = 'https://server-m7ny.onrender.com/api'
 
     const { id } = useLocalSearchParams();
     const [products, setProducts] = useState<Product[]>([]);
@@ -38,7 +43,7 @@ export default function ProductByCategoryScreen() {
     const fetchProducts = async () => {
         try {
             if (!refreshing) setLoading(true);
-            const res = await fetch(`${baseUrl}/product/category/${id}?search=${search}`);
+            const res = await fetch(`${BASE_URL}/product/category/${id}?search=${search}`);
             const data = await res.json();
             setProducts(data.data?.products || []);
         } catch (error) {
@@ -58,6 +63,7 @@ export default function ProductByCategoryScreen() {
         setRefreshing(false);
     };
 
+
     const renderItem = ({ item, index }: { item: Product; index: number }) => {
         const handleProductPress = () => {
             router.push(`/product/${item._id}`);
@@ -74,7 +80,7 @@ export default function ProductByCategoryScreen() {
             >
                 <View style={styles.imageContainer}>
                     <Image
-                        source={{ uri: item.images?.[0] || "https://via.placeholder.com/150" }}
+                        source={{ uri: item.images[0].url }}
                         style={styles.productImage}
                         resizeMode="cover"
                     />

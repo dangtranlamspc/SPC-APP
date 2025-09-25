@@ -1,5 +1,6 @@
 import { useFavourite } from '@/contexts/FavouriteContext';
 import { useProduct } from '@/contexts/ProductCTGDContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { CTGD } from '@/types/ctgd';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -37,8 +38,11 @@ export default function ProductListScreen() {
     setSelectedCategory,
   } = useProduct();
 
+  const { theme, isDark } = useTheme();
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const { handleScroll } = useScrollTabHide();
+
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     Animated.loop(
@@ -57,10 +61,11 @@ export default function ProductListScreen() {
     ).start();
   }, []);
 
-  // const [showSearchBar, setShowSearchBar] = useState<boolean>(true); // Always show search bar
-  const [tempSearchQuery, setTempSearchQuery] = useState<string>('');
+  useEffect(() => {
+    setRefreshKey(prev => prev + 1);
+  }, [isDark, theme]);
 
-  // const navigation = useNavigation();
+  const [tempSearchQuery, setTempSearchQuery] = useState<string>('');
 
   const handleCategorySelect = useCallback((categoryCTGDId: string) => {
     if (selectedCategory !== categoryCTGDId) {
@@ -81,72 +86,93 @@ export default function ProductListScreen() {
     categoryctgd: any;
     isSelected: boolean;
     onPress: () => void;
-  }) => (
-    <TouchableOpacity
-      onPress={onPress}
-      style={[
-        styles.categoryTab,
-        isSelected && styles.categoryTabActive
-      ]}
-      activeOpacity={0.7}
-    >
-      <Text
+  }) => {
+    const styles = createStyles(theme, isDark);
+
+    return (
+      <TouchableOpacity
+        onPress={onPress}
         style={[
-          styles.categoryTabText,
-          isSelected && styles.categoryTabTextActive
+          styles.categoryTab,
+          isSelected && styles.categoryTabActive
         ]}
+        activeOpacity={0.7}
       >
-        {categoryctgd.name}
-      </Text>
-    </TouchableOpacity>
-  ));
-
-  const renderSearchBar = () => (
-    <View style={styles.searchContainer}>
-      <View style={styles.searchInputContainer}>
-        <TextInput
-          value={tempSearchQuery}
-          onChangeText={setTempSearchQuery}
-          onSubmitEditing={handleSearch}
-          placeholder="Tìm kiếm sản phẩm..."
-          style={styles.searchInput}
-          returnKeyType="search"
-          multiline={false}
-        />
-        {tempSearchQuery.length > 0 && (
-          <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
-            <Ionicons name="close" size={20} color="#94a3b8" />
-          </TouchableOpacity>
-        )}
-      </View>
-      <TouchableOpacity onPress={handleSearch} style={styles.searchButton}>
-        <Text style={styles.searchButtonText}>Tìm kiếm</Text>
+        <Text
+          style={[
+            styles.categoryTabText,
+            isSelected && styles.categoryTabTextActive
+          ]}
+        >
+          {categoryctgd.name}
+        </Text>
       </TouchableOpacity>
-    </View>
-  );
+    );
+  });
 
-  const renderCategoryTabs = useCallback(() => (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      style={styles.categoryContainer}
-      contentContainerStyle={styles.categoryContent}
-      removeClippedSubviews={true}
-      keyboardShouldPersistTaps="handled"
-    >
-      {categories.map((categoryctgd) => (
-        <CategoryTab
-          key={categoryctgd._id}
-          categoryctgd={categoryctgd}
-          isSelected={selectedCategory === categoryctgd._id}
-          onPress={() => handleCategorySelect(categoryctgd._id)}
-        />
-      ))}
-    </ScrollView>
-  ), [categories, selectedCategory, handleCategorySelect]);
+  const renderSearchBar = () => {
+    const styles = createStyles(theme, isDark);
+
+    return (
+      <View style={styles.searchContainer}>
+        <View style={styles.searchInputContainer}>
+          <Ionicons
+            name="search"
+            size={20}
+            color={theme.textSecondary}
+            style={styles.searchIcon}
+          />
+          <TextInput
+            value={tempSearchQuery}
+            onChangeText={setTempSearchQuery}
+            onSubmitEditing={handleSearch}
+            placeholder="Tìm kiếm sản phẩm..."
+            placeholderTextColor={theme.textSecondary}
+            style={styles.searchInput}
+            returnKeyType="search"
+            multiline={false}
+          />
+          {tempSearchQuery.length > 0 && (
+            <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
+              <Ionicons name="close-circle" size={20} color={theme.textSecondary} />
+            </TouchableOpacity>
+          )}
+        </View>
+        <TouchableOpacity onPress={handleSearch} style={styles.searchButton}>
+          <Text style={styles.searchButtonText}>Tìm kiếm</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  const renderCategoryTabs = useCallback(() => {
+    const styles = createStyles(theme, isDark);
+
+    return (
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.categoryContainer}
+        contentContainerStyle={styles.categoryContent}
+        removeClippedSubviews={true}
+        keyboardShouldPersistTaps="handled"
+      >
+        {categories.map((categoryctgd) => (
+          <CategoryTab
+            key={categoryctgd._id}
+            categoryctgd={categoryctgd}
+            isSelected={selectedCategory === categoryctgd._id}
+            onPress={() => handleCategorySelect(categoryctgd._id)}
+          />
+        ))}
+      </ScrollView>
+    );
+  }, [categories, selectedCategory, handleCategorySelect, theme, isDark]);
 
   const renderSearchInfo = useCallback(() => {
     if (!searchQuery) return null;
+
+    const styles = createStyles(theme, isDark);
 
     return (
       <View style={styles.searchInfo}>
@@ -158,11 +184,12 @@ export default function ProductListScreen() {
         </Text>
       </View>
     );
-  }, [searchQuery, totalProducts]);
+  }, [searchQuery, totalProducts, theme, isDark]);
 
   const ProductCard = React.memo(({ item }: { item: CTGD }) => {
     const { toggleFavourite, favourites } = useFavourite();
     const [localFavouriteState, setLocalFavouriteState] = useState<boolean | null>(null);
+    const styles = createStyles(theme, isDark);
 
     const isFavouriteFromContext = useMemo(() => {
       return favourites.some(fav => fav._id === item._id);
@@ -224,7 +251,7 @@ export default function ProductListScreen() {
             />
           ) : (
             <View style={styles.placeholderImage}>
-              <Ionicons name="image-outline" size={32} color="#94a3b8" />
+              <Ionicons name="image-outline" size={32} color={theme.textSecondary} />
               <Text style={styles.placeholderText}>No Image</Text>
             </View>
           )}
@@ -243,7 +270,7 @@ export default function ProductListScreen() {
             <Ionicons
               name={isFavourite ? "heart" : "heart-outline"}
               size={16}
-              color={isFavourite ? "white" : "#64748b"}
+              color={isFavourite ? "white" : theme.textSecondary}
             />
           </TouchableOpacity>
 
@@ -270,20 +297,24 @@ export default function ProductListScreen() {
 
   const renderProductCard = useCallback(({ item }: { item: CTGD }) => (
     <ProductCard item={item} />
-  ), []);
+  ), [theme, isDark]);
 
-  const renderEmptyState = useCallback(() => (
-    <View style={styles.emptyState}>
-      <Ionicons name="search" size={64} color="#cbd5e1" />
-      <Text style={styles.emptyStateTitle}>Không tìm thấy sản phẩm</Text>
-      <Text style={styles.emptyStateText}>
-        {searchQuery
-          ? `Không tìm thấy sản phẩm cho "${searchQuery}"`
-          : "Không có sản phẩm nào trong danh mục này"
-        }
-      </Text>
-    </View>
-  ), [searchQuery]);
+  const renderEmptyState = useCallback(() => {
+    const styles = createStyles(theme, isDark);
+
+    return (
+      <View style={styles.emptyState}>
+        <Ionicons name="search" size={64} color={theme.textSecondary} />
+        <Text style={styles.emptyStateTitle}>Không tìm thấy sản phẩm</Text>
+        <Text style={styles.emptyStateText}>
+          {searchQuery
+            ? `Không tìm thấy sản phẩm cho "${searchQuery}"`
+            : "Không có sản phẩm nào trong danh mục này"
+          }
+        </Text>
+      </View>
+    );
+  }, [searchQuery, theme, isDark]);
 
   const getItemLayout = useCallback((data: any, index: number) => ({
     length: CARD_WIDTH * 1.2 + 32,
@@ -293,16 +324,21 @@ export default function ProductListScreen() {
 
   const keyExtractor = useCallback((item: CTGD) => item._id, []);
 
+  const styles = createStyles(theme, isDark);
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
+        <StatusBar
+          barStyle={isDark ? "light-content" : "dark-content"}
+          backgroundColor={theme.background}
+        />
         <View style={styles.headerWrapper}>
           {renderSearchBar()}
           {renderCategoryTabs()}
         </View>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2563eb" />
+          <ActivityIndicator size="large" color={theme.primary} />
           <Text style={styles.loadingText}>Đang tải dữ liệu...</Text>
         </View>
       </SafeAreaView>
@@ -311,13 +347,17 @@ export default function ProductListScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { paddingTop: 0 }]}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={theme.background}
+      />
       <View style={styles.headerWrapper}>
         {renderSearchBar()}
         {renderCategoryTabs()}
         {renderSearchInfo()}
       </View>
       <FlatList
+        key={`${refreshKey}-${isDark}-${theme.card}`}
         onScroll={handleScroll}
         scrollEventThrottle={16}
         data={products}
@@ -330,37 +370,37 @@ export default function ProductListScreen() {
         ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
         ListEmptyComponent={renderEmptyState}
         getItemLayout={getItemLayout}
-        removeClippedSubviews={true}
+        removeClippedSubviews={false}
         maxToRenderPerBatch={10}
         windowSize={10}
         initialNumToRender={6}
         updateCellsBatchingPeriod={50}
-        style={{ flex: 1, backgroundColor: '#F8F9FA' }}
+        style={[{ flex: 1 }, { backgroundColor: theme.background }]}
       />
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: theme.background,
   },
 
   // Header Wrapper - Fixed container
   headerWrapper: {
-    backgroundColor: '#F8F9FA',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: theme.surface,
+    ...(!isDark ? {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 2,
+    } : {
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    }),
     marginTop: -55
-    // position: 'absolute',
-    // top: 10,
-    // left: 0,
-    // right: 0,
-    // zIndex: 1,
   },
 
   // Search Styles
@@ -370,51 +410,37 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: theme.surface,
   },
 
   searchInputContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderRadius: 25,
     paddingHorizontal: 16,
     height: 40,
+    ...(!isDark ? {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+      elevation: 1,
+    } : {
+      borderWidth: 1,
+      borderColor: theme.border,
+    }),
+  },
+
+  searchIcon: {
+    marginRight: 8,
   },
 
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: '#1e293b',
-  },
-
-  cardContent: {
-    alignItems: 'center',
-    paddingTop: 10
-  },
-
-  productName: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#1a1a1a',
-
-  },
-
-  categoryBadge: {
-    backgroundColor: '#dbeafe',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 12,
-    marginBottom: 8,
-    alignItems: 'center'
-  },
-
-  categoryBadgeText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#1d4ed8',
-    alignItems: 'center'
+    color: theme.text,
   },
 
   clearButton: {
@@ -422,7 +448,7 @@ const styles = StyleSheet.create({
   },
 
   searchButton: {
-    backgroundColor: '#4F7AFF',
+    backgroundColor: theme.primary,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
@@ -438,7 +464,7 @@ const styles = StyleSheet.create({
 
   // Category Styles
   categoryContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     maxHeight: 60,
     minHeight: 60,
   },
@@ -453,20 +479,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: theme.surface,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.border,
   },
 
   categoryTabActive: {
-    backgroundColor: '#4F7AFF',
-    borderColor: '#4F7AFF',
+    backgroundColor: theme.primary,
+    borderColor: theme.primary,
   },
 
   categoryTabText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#64748b',
+    color: theme.textSecondary,
   },
 
   categoryTabTextActive: {
@@ -477,22 +503,22 @@ const styles = StyleSheet.create({
   searchInfo: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     flexDirection: 'row',
     justifyContent: 'space-between',
     borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
+    borderTopColor: theme.border,
     minHeight: 48,
   },
 
   searchInfoText: {
     fontSize: 14,
-    color: '#64748b',
+    color: theme.textSecondary,
   },
 
   searchInfoCount: {
     fontSize: 14,
-    color: '#64748b',
+    color: theme.textSecondary,
     fontWeight: '500',
   },
 
@@ -506,48 +532,40 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
 
-  newBadge: {
-    position: 'absolute',
-    top: -8,
-    left: -8,
-    backgroundColor: '#FF6B6B',
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-
-  newText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-
   // Card Styles
   card: {
     width: CARD_WIDTH,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderRadius: 16,
     padding: 15,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 6,
+    ...(!isDark ? {
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.12,
+      shadowRadius: 8,
+      elevation: 6,
+    } : {
+      borderWidth: 1,
+      borderColor: theme.border,
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.3,
+      shadowRadius: 4,
+      elevation: 3,
+    }),
     marginBottom: 4,
   },
 
   imageContainer: {
     position: 'relative',
     height: CARD_WIDTH * 1.2,
-    backgroundColor: '#e7ebeeff',
+    backgroundColor: theme.surface,
     borderRadius: 8,
     overflow: 'hidden',
   },
@@ -562,14 +580,40 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#e9ecef',
+    backgroundColor: theme.surface,
+    borderWidth: 1,
+    borderColor: theme.border,
+    borderStyle: 'dashed',
   },
 
   placeholderText: {
     fontSize: 12,
-    color: '#6c757d',
+    color: theme.textSecondary,
     fontWeight: '500',
     marginTop: 4,
+  },
+
+  newBadge: {
+    position: 'absolute',
+    top: -8,
+    left: -8,
+    backgroundColor: theme.error,
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
+    borderWidth: 2,
+    borderColor: theme.card,
+  },
+
+  newText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
 
   favoriteButton: {
@@ -590,7 +634,7 @@ const styles = StyleSheet.create({
   },
 
   favoriteButtonActive: {
-    backgroundColor: '#ef4444',
+    backgroundColor: theme.error,
   },
 
   ratingBadge: {
@@ -612,6 +656,34 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
+  cardContent: {
+    alignItems: 'center',
+    paddingTop: 10
+  },
+
+  productName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.text,
+    textAlign: 'center',
+  },
+
+  categoryBadge: {
+    backgroundColor: theme.primary + '15',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginBottom: 8,
+    alignItems: 'center'
+  },
+
+  categoryBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: theme.primary,
+    alignItems: 'center'
+  },
+
   // Loading Styles
   loadingContainer: {
     flex: 1,
@@ -623,7 +695,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#64748b',
+    color: theme.textSecondary,
   },
 
   // Empty State
@@ -637,14 +709,14 @@ const styles = StyleSheet.create({
   emptyStateTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#1e293b',
+    color: theme.text,
     marginTop: 16,
     marginBottom: 8,
   },
 
   emptyStateText: {
     fontSize: 16,
-    color: '#64748b',
+    color: theme.textSecondary,
     textAlign: 'center',
     paddingHorizontal: 32,
   },

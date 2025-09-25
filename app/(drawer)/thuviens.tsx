@@ -1,3 +1,4 @@
+import { useTheme } from "@/contexts/ThemeContext";
 import { useThuVien } from "@/contexts/ThuVienContext";
 import { apiCall } from "@/utils/apiCall";
 import { Ionicons } from "@expo/vector-icons";
@@ -14,8 +15,6 @@ interface CategoryThuVien {
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 32) / 2;
 
-
-
 const sortOptions = [
     { value: 'newest', label: 'Mới nhất' },
     { value: 'oldest', label: 'Cũ nhất' },
@@ -23,6 +22,7 @@ const sortOptions = [
 
 export default function ThuVienScreen() {
     const { thuviens, fetchThuVien, error, loading } = useThuVien();
+    const { theme, isDark } = useTheme();
     const [searchText, setSearchText] = useState("");
     const [categories, setCategories] = useState<CategoryThuVien[]>([]);
 
@@ -47,19 +47,6 @@ export default function ThuVienScreen() {
         };
         fetchCategories();
     }, []);
-
-    // useEffect(() => {
-    //     const setOrientation = async () => {
-    //         if (selectedVideo) {
-    //             await ScreenOrientation.lockAsync(
-    //                 ScreenOrientation.OrientationLock.LANDSCAPE
-    //             );
-    //         } else {
-    //             await ScreenOrientation.unlockAsync(); // trả lại auto
-    //         }
-    //     };
-    //     setOrientation();
-    // }, [selectedVideo]);
 
     const filteredThuVien = thuviens
         .filter((b) =>
@@ -88,21 +75,18 @@ export default function ThuVienScreen() {
         }
     }, [selectedCategory, fetchThuVien]);
 
-
     const getSelectedCategoryText = () => {
         if (!selectedCategory) return "Tất cả danh mục";
         const category = categories.find(cat => cat._id === selectedCategory);
         return category?.name || "Tất cả danh mục";
     };
 
-    // const handleBlogPress = useCallback((blogId: string) => {
-    //     router.push(`/thuvien/${blogId}`);
-    // }, [router]);
-
     const getSelectedSortText = () => {
         const sortOption = sortOptions.find(option => option.value === sortOrder);
         return sortOption?.label || "Mới nhất";
     };
+
+    const styles = createStyles(theme, isDark);
 
     return (
         <View style={styles.container}>
@@ -110,21 +94,19 @@ export default function ThuVienScreen() {
                 <Ionicons
                     name="search"
                     size={20}
-                    color="#9ca3af"
+                    color={theme.textSecondary}
                     style={styles.searchIcon}
                 />
                 <TextInput
                     style={styles.searchInput}
                     placeholder="Tìm kiếm bài viết..."
-                    placeholderTextColor="#9ca3af"
+                    placeholderTextColor={theme.textSecondary}
                     value={searchText}
                     onChangeText={setSearchText}
                 />
             </View>
 
-
             <View style={styles.filtersRow}>
-
                 <View style={styles.filterContainer}>
                     <Text style={styles.filterLabel}>Danh mục</Text>
                     <TouchableOpacity
@@ -137,7 +119,7 @@ export default function ThuVienScreen() {
                         <Ionicons
                             name="chevron-down"
                             size={20}
-                            color="#6b7280"
+                            color={theme.textSecondary}
                             style={styles.dropdownIcon}
                         />
                     </TouchableOpacity>
@@ -155,13 +137,14 @@ export default function ThuVienScreen() {
                         <Ionicons
                             name="chevron-down"
                             size={20}
-                            color="#6b7280"
+                            color={theme.textSecondary}
                             style={styles.dropdownIcon}
                         />
                     </TouchableOpacity>
                 </View>
             </View>
 
+            {/* Category Modal */}
             <Modal
                 visible={showCategoryModal}
                 transparent={true}
@@ -174,15 +157,12 @@ export default function ThuVienScreen() {
                     onPress={() => setShowCategoryModal(false)}
                 >
                     <TouchableOpacity activeOpacity={1} style={styles.modalContent}>
-                        {/* Handle bar */}
                         <View style={styles.modalHandle} />
 
-                        {/* Header */}
                         <View style={styles.modalHeader}>
                             <Text style={styles.modalTitle}>Chọn danh mục</Text>
                         </View>
 
-                        {/* Options */}
                         <View style={styles.optionsContainer}>
                             <FlatList
                                 data={[{ _id: '', name: 'Tất cả danh mục' }, ...categories]}
@@ -197,7 +177,6 @@ export default function ThuVienScreen() {
                                         onPress={async () => {
                                             setSelectedCategory(item._id);
                                             setShowCategoryModal(false);
-                                            // Đợi fetchBSCTs hoàn thành
                                             await fetchThuVien(item._id || undefined);
                                         }}
                                     >
@@ -208,14 +187,13 @@ export default function ThuVienScreen() {
                                             {item.name}
                                         </Text>
                                         {selectedCategory === item._id && (
-                                            <Ionicons name="checkmark" size={20} color="#007aff" />
+                                            <Ionicons name="checkmark" size={20} color={theme.primary} />
                                         )}
                                     </TouchableOpacity>
                                 )}
                             />
                         </View>
 
-                        {/* Cancel button */}
                         <TouchableOpacity
                             style={styles.cancelButton}
                             onPress={() => setShowCategoryModal(false)}
@@ -226,7 +204,7 @@ export default function ThuVienScreen() {
                 </TouchableOpacity>
             </Modal>
 
-            {/* iOS-style Sort Modal */}
+            {/* Sort Modal */}
             <Modal
                 visible={showSortModal}
                 transparent={true}
@@ -239,15 +217,12 @@ export default function ThuVienScreen() {
                     onPress={() => setShowSortModal(false)}
                 >
                     <TouchableOpacity activeOpacity={1} style={styles.modalContent}>
-                        {/* Handle bar */}
                         <View style={styles.modalHandle} />
 
-                        {/* Header */}
                         <View style={styles.modalHeader}>
                             <Text style={styles.modalTitle}>Sắp xếp theo</Text>
                         </View>
 
-                        {/* Options */}
                         <View style={styles.optionsContainer}>
                             <FlatList
                                 data={sortOptions}
@@ -271,14 +246,13 @@ export default function ThuVienScreen() {
                                             {item.label}
                                         </Text>
                                         {sortOrder === item.value && (
-                                            <Ionicons name="checkmark" size={20} color="#007aff" />
+                                            <Ionicons name="checkmark" size={20} color={theme.primary} />
                                         )}
                                     </TouchableOpacity>
                                 )}
                             />
                         </View>
 
-                        {/* Cancel button */}
                         <TouchableOpacity
                             style={styles.cancelButton}
                             onPress={() => setShowSortModal(false)}
@@ -289,11 +263,11 @@ export default function ThuVienScreen() {
                 </TouchableOpacity>
             </Modal>
 
-            {/* Loading indicator lúc đầu */}
+            {/* Loading indicator */}
             {loading && !refreshing && (
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#3b82f6" />
-                    <Text style={{ marginTop: 10, color: '#6b7280' }}>Đang tải...</Text>
+                    <ActivityIndicator size="large" color={theme.primary} />
+                    <Text style={styles.loadingText}>Đang tải...</Text>
                 </View>
             )}
 
@@ -303,7 +277,8 @@ export default function ThuVienScreen() {
                     {error}
                 </Text>
             )}
-            {/* Enhanced List */}
+
+            {/* Video List */}
             <FlatList
                 data={filteredThuVien}
                 keyExtractor={(item) => item._id}
@@ -312,13 +287,12 @@ export default function ThuVienScreen() {
                     <RefreshControl
                         refreshing={refreshing}
                         onRefresh={onRefresh}
-                        colors={['#3b82f6']}
-                        tintColor="#3b82f6"
+                        colors={[theme.primary]}
+                        tintColor={theme.primary}
                     />
                 }
                 renderItem={({ item }) => (
                     <View style={styles.listItem}>
-                        {/* Video player inline */}
                         <YoutubePlayer
                             height={220}
                             play={playingVideo === item.videoId}
@@ -331,8 +305,7 @@ export default function ThuVienScreen() {
                                 }
                             }}
                         />
-                        {/* Info */}
-                        <View style={{ padding: 8 }}>
+                        <View style={styles.videoInfo}>
                             <Text style={styles.itemTitle}>{item.title}</Text>
                             <Text style={styles.itemCategory}>
                                 {item.categoryThuVien?.name || "Không có danh mục"}
@@ -341,23 +314,24 @@ export default function ThuVienScreen() {
                     </View>
                 )}
             // ListEmptyComponent={
-            //   !loading && (
-            //     <Text style={styles.emptyText}>
-            //       Không có blog nào được tìm thấy
-            //     </Text>
-            //   )
+            //     !loading && (
+            //         <View style={styles.emptyContainer}>
+            //             <Ionicons name="videocam-outline" size={64} color={theme.textSecondary} />
+            //             <Text style={styles.emptyText}>
+            //                 Không có video nào được tìm thấy
+            //             </Text>
+            //         </View>
+            //     )
             // }
             />
-
         </View>
-    )
-
+    );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8f9fa',
+        backgroundColor: theme.background,
         paddingHorizontal: 16,
         paddingTop: 16,
     },
@@ -367,35 +341,32 @@ const styles = StyleSheet.create({
         position: 'relative',
         marginBottom: 16,
     },
-    card: {
-        backgroundColor: "#f9f9f9",
-        borderRadius: 8,
-        overflow: "hidden",
-    },
-    title: { fontWeight: "bold", fontSize: 16, marginTop: 4 },
-    category: { fontSize: 14, color: "#555" },
     searchInput: {
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.card,
         borderRadius: 12,
         paddingHorizontal: 16,
         paddingVertical: 12,
         paddingLeft: 45,
         fontSize: 16,
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 3.84,
-        elevation: 5,
-        borderWidth: 0,
+        color: theme.text,
+        ...(!isDark ? {
+            shadowColor: '#000',
+            shadowOffset: {
+                width: 0,
+                height: 2,
+            },
+            shadowOpacity: 0.1,
+            shadowRadius: 3.84,
+            elevation: 5,
+        } : {
+            borderWidth: 1,
+            borderColor: theme.border,
+        }),
     },
     searchIcon: {
         position: 'absolute',
         left: 13,
-        top: '32%',
-        transform: [{ translateY: -10 }],
+        top: 12,
         zIndex: 1,
     },
 
@@ -411,31 +382,36 @@ const styles = StyleSheet.create({
     filterLabel: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#374151',
+        color: theme.text,
         marginBottom: 6,
     },
 
     // Custom Dropdown Styles
     dropdownButton: {
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.card,
         borderRadius: 10,
         paddingHorizontal: 16,
         paddingVertical: 12,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 1,
-        },
-        shadowOpacity: 0.08,
-        shadowRadius: 2.84,
-        elevation: 3,
+        ...(!isDark ? {
+            shadowColor: '#000',
+            shadowOffset: {
+                width: 0,
+                height: 1,
+            },
+            shadowOpacity: 0.08,
+            shadowRadius: 2.84,
+            elevation: 3,
+        } : {
+            borderWidth: 1,
+            borderColor: theme.border,
+        }),
     },
     dropdownButtonText: {
         fontSize: 14,
-        color: '#374151',
+        color: theme.text,
         flex: 1,
     },
     dropdownIcon: {
@@ -450,24 +426,29 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     modalContent: {
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.surface,
         borderRadius: 12,
         width: '80%',
         maxHeight: '60%',
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 4,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 5.84,
-        elevation: 10,
+        ...(!isDark ? {
+            shadowColor: '#000',
+            shadowOffset: {
+                width: 0,
+                height: 4,
+            },
+            shadowOpacity: 0.25,
+            shadowRadius: 5.84,
+            elevation: 10,
+        } : {
+            borderWidth: 1,
+            borderColor: theme.border,
+        }),
     },
     modalHeader: {
         paddingHorizontal: 20,
         paddingVertical: 16,
         borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb',
+        borderBottomColor: theme.border,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -475,75 +456,72 @@ const styles = StyleSheet.create({
     modalTitle: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#1f2937',
-    },
-    closeButton: {
-        padding: 4,
+        color: theme.text,
     },
     optionItem: {
         paddingHorizontal: 20,
         paddingVertical: 16,
         borderBottomWidth: 1,
-        borderBottomColor: '#f3f4f6',
+        borderBottomColor: theme.border,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
     },
     optionText: {
         fontSize: 16,
-        color: '#374151',
-    },
-    selectedOption: {
-        backgroundColor: '#eff6ff',
+        color: theme.text,
     },
     selectedOptionText: {
-        color: '#2563eb',
+        color: theme.primary,
         fontWeight: '600',
     },
 
     // List Item Styles
     listItem: {
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.card,
         borderRadius: 12,
         padding: 16,
         marginBottom: 16,
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.08,
-        shadowRadius: 3.84,
-        elevation: 4,
+        marginHorizontal: 2,
+        ...(!isDark ? {
+            shadowColor: '#000',
+            shadowOffset: {
+                width: 0,
+                height: 6,
+            },
+            shadowOpacity: 0.15,
+            shadowRadius: 6,
+            elevation: 12,
+        } : {
+            shadowColor: '#000',
+            shadowOffset: {
+                width: 0,
+                height: 4,
+            },
+            shadowOpacity: 0.4,
+            shadowRadius: 8,
+            elevation: 10,
+            borderWidth: 0.5,
+            borderColor: theme.border + '40',
+        }),
     },
-    itemImage: {
-        width: '100%',
-        height: CARD_WIDTH * 1.2,
-        borderRadius: 10,
-        marginBottom: 12,
+    videoInfo: {
+        padding: 8,
     },
     itemTitle: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#1f2937',
+        color: theme.text,
         marginBottom: 8,
         lineHeight: 24,
     },
-    itemSummary: {
-        fontSize: 14,
-        fontWeight: '500',
-        color: '#1f2937',
-        marginBottom: 8,
-        lineHeight: 16,
-    },
     itemCategory: {
         fontSize: 14,
-        color: '#6b7280',
-        backgroundColor: '#f3f4f6',
+        color: theme.textSecondary,
+        backgroundColor: theme.surface,
         paddingHorizontal: 10,
         paddingVertical: 4,
         borderRadius: 12,
-        marginBottom: 8,
         alignSelf: 'flex-start',
     },
 
@@ -554,36 +532,47 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingTop: 50,
     },
+    loadingText: {
+        marginTop: 10,
+        color: theme.textSecondary,
+        fontSize: 16,
+    },
     errorText: {
-        color: '#ef4444',
+        color: theme.error,
         fontSize: 16,
         textAlign: 'center',
         marginBottom: 16,
-        backgroundColor: '#fef2f2',
+        backgroundColor: isDark ? theme.error + '20' : '#fef2f2',
         padding: 12,
         borderRadius: 8,
         borderLeftWidth: 4,
-        borderLeftColor: '#ef4444',
+        borderLeftColor: theme.error,
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingTop: 50,
     },
     emptyText: {
         textAlign: 'center',
-        marginTop: 50,
-        color: '#6b7280',
+        marginTop: 16,
+        color: theme.textSecondary,
         fontSize: 16,
     },
 
-    // Missing iOS Modal Styles
+    // iOS Modal Styles
     modalHandle: {
         width: 36,
         height: 5,
-        backgroundColor: '#c7c7cc',
+        backgroundColor: theme.textSecondary,
         borderRadius: 3,
         alignSelf: 'center',
         marginTop: 12,
         marginBottom: 8,
     },
     optionsContainer: {
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.surface,
         marginHorizontal: 16,
         borderRadius: 12,
         marginTop: 8,
@@ -593,7 +582,7 @@ const styles = StyleSheet.create({
         borderBottomWidth: 0,
     },
     cancelButton: {
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.surface,
         marginHorizontal: 16,
         marginTop: 12,
         borderRadius: 12,
@@ -603,7 +592,6 @@ const styles = StyleSheet.create({
     cancelButtonText: {
         fontSize: 17,
         fontWeight: '600',
-        color: '#007aff',
+        color: theme.primary,
     },
 });
-
