@@ -1,5 +1,6 @@
 import { useFavourite } from '@/contexts/FavouriteContext';
 import { useProduct } from '@/contexts/ProductContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { Product } from '@/types/product';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -40,6 +41,8 @@ export default function ProductListScreen() {
     setSelectedCategory,
     setCurrentPage
   } = useProduct();
+
+  const { theme, isDark } = useTheme();
 
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const { handleScroll } = useScrollTabHide();
@@ -96,107 +99,122 @@ export default function ProductListScreen() {
     category: any;
     isSelected: boolean;
     onPress: () => void;
-  }) => (
-    <TouchableOpacity
-      onPress={onPress}
-      style={[
-        styles.categoryTab,
-        isSelected && styles.categoryTabActive
-      ]}
-      activeOpacity={0.7}
-    >
-      <Text
+  }) => {
+    const styles = createStyles(theme, isDark);
+    return (
+      <TouchableOpacity
+        onPress={onPress}
         style={[
-          styles.categoryTabText,
-          isSelected && styles.categoryTabTextActive
+          styles.categoryTab,
+          isSelected && styles.categoryTabActive
         ]}
-      >
-        {category.name}
-      </Text>
-    </TouchableOpacity>
-  ));
-
-  const renderHeaderContent = () => (
-    <View style={styles.headerContent}>
-      <TouchableOpacity
-        style={styles.menuButton}
-        onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
-      >
-        <Text style={styles.menuIcon}>☰</Text>
-      </TouchableOpacity>
-      <Text style={styles.headerTitle}>Sản phẩm</Text>
-      <TouchableOpacity
-        onPress={handleShowSearch}
-        style={styles.searchIcon}
         activeOpacity={0.7}
       >
-        <Ionicons name="search" size={20} color="#64748b" />
+        <Text
+          style={[
+            styles.categoryTabText,
+            isSelected && styles.categoryTabTextActive
+          ]}
+        >
+          {category.name}
+        </Text>
       </TouchableOpacity>
-    </View>
-  );
+    )
+  });
 
-  const renderSearchBar = () => (
-    <View style={styles.searchContainer}>
-      <TouchableOpacity
-        onPress={handleHideSearch}
-        style={styles.backButton}
-        activeOpacity={0.7}
-      >
-        <Ionicons name="arrow-back" size={24} color="#64748b" />
-      </TouchableOpacity>
-      <View style={styles.searchInputContainer}>
-        <TextInput
-          value={tempSearchQuery}
-          onChangeText={setTempSearchQuery}
-          onSubmitEditing={handleSearch}
-          placeholder="Tìm kiếm sản phẩm..."
-          style={styles.searchInput}
-          autoFocus={true}
-          returnKeyType="search"
-          multiline={false}
-          blurOnSubmit={false}
-        />
-        {tempSearchQuery.length > 0 && (
-          <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
-            <Ionicons name="close" size={16} color="#94a3b8" />
-          </TouchableOpacity>
-        )}
+  const renderHeaderContent = () => {
+    const styles = createStyles(theme, isDark);
+    return (
+      <View style={styles.headerContent}>
+        <TouchableOpacity
+          style={styles.menuButton}
+          onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
+        >
+          <Ionicons name="menu" size={28} color={theme.text} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Sản phẩm</Text>
+        <TouchableOpacity
+          onPress={handleShowSearch}
+          style={styles.searchIcon}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="search" size={20} color={theme.textSecondary} />
+        </TouchableOpacity>
       </View>
-      <TouchableOpacity onPress={handleSearch} style={styles.searchButton}>
-        <Text style={styles.searchButtonText}>Tìm kiếm</Text>
-      </TouchableOpacity>
-    </View>
-  );
+    )
+  };
 
-  const renderHeader = () => (
-    <View style={styles.header}>
-      {showSearchBar ? renderSearchBar() : renderHeaderContent()}
-    </View>
-  );
+  const renderSearchBar = () => {
+    const styles = createStyles(theme, isDark);
+    return (
+      <View style={styles.searchContainer}>
+        <TouchableOpacity
+          onPress={handleHideSearch}
+          style={styles.backButton}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="arrow-back" size={24} color={theme.textSecondary} />
+        </TouchableOpacity>
+        <View style={styles.searchInputContainer}>
+          <TextInput
+            value={tempSearchQuery}
+            onChangeText={setTempSearchQuery}
+            onSubmitEditing={handleSearch}
+            placeholder="Tìm kiếm sản phẩm..."
+            placeholderTextColor={theme.textSecondary}
+            style={styles.searchInput}
+            autoFocus={true}
+            returnKeyType="search"
+            multiline={false}
+          />
+          {tempSearchQuery.length > 0 && (
+            <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
+              <Ionicons name="close" size={16} color={theme.textSecondary} />
+            </TouchableOpacity>
+          )}
+        </View>
+        <TouchableOpacity onPress={handleSearch} style={styles.searchButton}>
+          <Text style={styles.searchButtonText}>Tìm kiếm</Text>
+        </TouchableOpacity>
+      </View>
+    )
+  };
 
-  const renderCategoryTabs = useCallback(() => (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      style={styles.categoryContainer}
-      contentContainerStyle={styles.categoryContent}
-      removeClippedSubviews={true}
-      keyboardShouldPersistTaps="handled"
-    >
-      {categories.map((category) => (
-        <CategoryTab
-          key={category._id}
-          category={category}
-          isSelected={selectedCategory === category._id}
-          onPress={() => handleCategorySelect(category._id)}
-        />
-      ))}
-    </ScrollView>
-  ), [categories, selectedCategory, handleCategorySelect]);
+  const renderHeader = () => {
+    const styles = createStyles(theme, isDark);
+    return (
+      <View style={styles.header}>
+        {showSearchBar ? renderSearchBar() : renderHeaderContent()}
+      </View>
+    )
+  };
+
+  const renderCategoryTabs = useCallback(() => {
+    const styles = createStyles(theme, isDark);
+    return (
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.categoryContainer}
+        contentContainerStyle={styles.categoryContent}
+        removeClippedSubviews={true}
+        keyboardShouldPersistTaps="handled"
+      >
+        {categories.map((category) => (
+          <CategoryTab
+            key={category._id}
+            category={category}
+            isSelected={selectedCategory === category._id}
+            onPress={() => handleCategorySelect(category._id)}
+          />
+        ))}
+      </ScrollView>
+    )
+  }, [categories, selectedCategory, handleCategorySelect, theme, isDark]);
 
   const renderSearchInfo = useCallback(() => {
     if (!searchQuery) return null;
-
+    const styles = createStyles(theme, isDark);
     return (
       <View style={styles.searchInfo}>
         <Text style={styles.searchInfoText}>
@@ -207,15 +225,17 @@ export default function ProductListScreen() {
         </Text>
       </View>
     );
-  }, [searchQuery, totalProducts]);
+  }, [searchQuery, totalProducts, theme, isDark]);
 
   const ProductCard = React.memo(({ item }: { item: Product }) => {
     const { toggleFavourite, isFavourite } = useFavourite();
     const [localFavouriteState, setLocalFavouriteState] = useState<boolean | null>(null);
 
+    const styles = createStyles(theme, isDark);
+
     // Get favourite status from context using the isFavourite function
     const isFavouriteFromContext = isFavourite(item._id);
-    
+
     // Use local state if available, otherwise use context
     const currentFavouriteState = localFavouriteState !== null ? localFavouriteState : isFavouriteFromContext;
 
@@ -263,14 +283,14 @@ export default function ProductListScreen() {
 
       } catch (error) {
         console.error('Error toggling favourite:', error);
-        
+
         // Kiểm tra nếu là lỗi authentication
         if (error instanceof Error && error.message.includes('Authentication required')) {
           // Redirect to login
           router.push('/(auth)/login');
           return;
         }
-        
+
         // Revert local state nếu có lỗi khác
         setLocalFavouriteState(currentFavouriteState);
       }
@@ -291,7 +311,7 @@ export default function ProductListScreen() {
             />
           ) : (
             <View style={styles.placeholderImage}>
-              <Ionicons name="image-outline" size={32} color="#94a3b8" />
+              <Ionicons name="image-outline" size={32} color={theme.textSecondary} />
               <Text style={styles.placeholderText}>No Image</Text>
             </View>
           )}
@@ -310,7 +330,7 @@ export default function ProductListScreen() {
             <Ionicons
               name={currentFavouriteState ? "heart" : "heart-outline"}
               size={16}
-              color={currentFavouriteState ? "white" : "#64748b"}
+              color={currentFavouriteState ? "white" : theme.textSecondary}
             />
           </TouchableOpacity>
 
@@ -338,51 +358,23 @@ export default function ProductListScreen() {
 
   const renderProductCard = useCallback(({ item }: { item: Product }) => (
     <ProductCard item={item} />
-  ), []);
+  ), [theme, isDark]);
 
-  const renderPagination = useCallback(() => {
-    if (totalPages <= 1) return null;
-
-    const handlePrevPage = () => setCurrentPage(Math.max(1, currentPage - 1));
-    const handleNextPage = () => setCurrentPage(Math.min(totalPages, currentPage + 1));
-
+  const renderEmptyState = useCallback(() => {
+    const styles = createStyles(theme, isDark);
     return (
-      <View style={styles.pagination}>
-        <TouchableOpacity
-          onPress={handlePrevPage}
-          disabled={currentPage === 1}
-          style={[styles.paginationButton, currentPage === 1 && styles.paginationButtonDisabled]}
-        >
-          <Text style={[styles.paginationButtonText, currentPage === 1 && styles.paginationButtonTextDisabled]}>
-            Previous
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={handleNextPage}
-          disabled={currentPage === totalPages}
-          style={[styles.paginationButton, currentPage === totalPages && styles.paginationButtonDisabled]}
-        >
-          <Text style={[styles.paginationButtonText, currentPage === totalPages && styles.paginationButtonTextDisabled]}>
-            Next
-          </Text>
-        </TouchableOpacity>
+      <View style={styles.emptyState}>
+        <Ionicons name="search" size={64} color={theme.textSecondary} />
+        <Text style={styles.emptyStateTitle}>No Products Found</Text>
+        <Text style={styles.emptyStateText}>
+          {searchQuery
+            ? `No products found for "${searchQuery}"`
+            : "No products available in this category"
+          }
+        </Text>
       </View>
-    );
-  }, [totalPages, currentPage, setCurrentPage]);
-
-  const renderEmptyState = useCallback(() => (
-    <View style={styles.emptyState}>
-      <Ionicons name="search" size={64} color="#cbd5e1" />
-      <Text style={styles.emptyStateTitle}>No Products Found</Text>
-      <Text style={styles.emptyStateText}>
-        {searchQuery
-          ? `No products found for "${searchQuery}"`
-          : "No products available in this category"
-        }
-      </Text>
-    </View>
-  ), [searchQuery]);
+    )
+  }, [searchQuery, theme, isDark]);
 
   const getItemLayout = useCallback((data: any, index: number) => ({
     length: CARD_WIDTH * 1.2 + 32,
@@ -392,15 +384,21 @@ export default function ProductListScreen() {
 
   const keyExtractor = useCallback((item: Product) => item._id, []);
 
+  const styles = createStyles(theme, isDark);
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
+        <StatusBar
+          barStyle={isDark ? "light-content" : "dark-content"}
+          backgroundColor={theme.background}
+        />
         <View style={styles.headerWrapper}>
           {renderHeader()}
           {renderCategoryTabs()}
         </View>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2563eb" />
+          <ActivityIndicator size="large" color={theme.primary} />
           <Text style={styles.loadingText}>Đang tải dữ liệu...</Text>
         </View>
       </SafeAreaView>
@@ -408,10 +406,10 @@ export default function ProductListScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#F8F9FA" }}>
+    <SafeAreaView style={styles.container}>
       <StatusBar
-        barStyle="dark-content"
-        backgroundColor="#F8F9FA"
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={theme.background}
         translucent={false}
       />
       <View style={styles.headerWrapper}>
@@ -437,23 +435,23 @@ export default function ProductListScreen() {
         windowSize={10}
         initialNumToRender={6}
         updateCellsBatchingPeriod={50}
-        style={{ flex: 1 }}
+        style={[{ flex: 1 }, { backgroundColor: theme.background }]}
       />
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: theme.background,
   },
 
   // Header Wrapper - Fixed container
   headerWrapper: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: theme.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    borderBottomColor: theme.border,
   },
 
   // Header Styles
@@ -476,12 +474,13 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#2C3E50',
+    color: theme.text,
   },
 
   searchIcon: {
     padding: 8,
     borderRadius: 20,
+    backgroundColor: theme.background + '80',
   },
 
   backButton: {
@@ -506,16 +505,26 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f1f5f9',
+    backgroundColor: theme.card,
     borderRadius: 25,
     paddingHorizontal: 16,
     height: 40,
+    ...(!isDark ? {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+      elevation: 1,
+    } : {
+      borderWidth: 1,
+      borderColor: theme.border
+    })
   },
 
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: '#1e293b',
+    color: theme.text,
   },
 
   clearButton: {
@@ -523,7 +532,7 @@ const styles = StyleSheet.create({
   },
 
   searchButton: {
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.primary,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
@@ -539,6 +548,7 @@ const styles = StyleSheet.create({
   categoryContainer: {
     maxHeight: 60,
     minHeight: 60,
+    backgroundColor: theme.card,
   },
 
   menuButton: {
@@ -559,17 +569,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: theme.surface,
+    borderColor: theme.border,
+    borderWidth: 1,
   },
 
   categoryTabActive: {
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.primary,
+    borderColor: theme.primary,
   },
 
   categoryTabText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#64748b',
+    color: theme.textSecondary,
   },
 
   categoryTabTextActive: {
@@ -580,19 +593,22 @@ const styles = StyleSheet.create({
   searchInfo: {
     paddingHorizontal: 16,
     paddingVertical: 12,
+    backgroundColor: theme.card,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    borderTopWidth: 1,
+    borderTopColor: theme.border,
     minHeight: 48,
   },
 
   searchInfoText: {
     fontSize: 14,
-    color: '#64748b',
+    color: theme.textSecondary,
   },
 
   searchInfoCount: {
     fontSize: 14,
-    color: '#64748b',
+    color: theme.textSecondary,
     fontWeight: '500',
   },
 
@@ -609,7 +625,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -8,
     left: -8,
-    backgroundColor: '#FF6B6B',
+    backgroundColor: theme.error,
     borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 3,
@@ -617,6 +633,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 2,
+    borderWidth: 2,
+    borderColor: theme.card,
   },
   newText: {
     color: '#FFFFFF',
@@ -628,29 +646,43 @@ const styles = StyleSheet.create({
   // Card Styles
   card: {
     width: CARD_WIDTH,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderRadius: 16,
     padding: 15,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 6,
+    ...(!isDark ? {
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.12,
+      shadowRadius: 8,
+      elevation: 6
+    } : {
+      borderWidth: 1,
+      borderColor: theme.border,
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.3,
+      shadowRadius: 3,
+      elevation: 3,
+    }),
     marginBottom: 4,
   },
 
   imageContainer: {
     position: 'relative',
     height: CARD_WIDTH * 1.2,
-    backgroundColor: '#e7ebeeff',
+    backgroundColor: theme.surface,
   },
 
   productImage: {
     width: '100%',
     height: '100%',
+    borderRadius : 10,
   },
 
   placeholderImage: {
@@ -658,12 +690,15 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#e9ecef',
+    backgroundColor: theme.surface,
+    borderWidth: 1,
+    borderColor: theme.border,
+    borderStyle: 'dashed',
   },
 
   placeholderText: {
     fontSize: 12,
-    color: '#6c757d',
+    color: theme.textSecondary,
     fontWeight: '500',
     marginTop: 4,
   },
@@ -686,7 +721,7 @@ const styles = StyleSheet.create({
   },
 
   favoriteButtonActive: {
-    backgroundColor: '#ef4444',
+    backgroundColor: theme.error,
   },
 
   ratingBadge: {
@@ -714,13 +749,14 @@ const styles = StyleSheet.create({
   },
 
   productName: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: theme.text,
+    textAlign: 'center',
   },
 
   categoryBadge: {
-    backgroundColor: '#dbeafe',
+    backgroundColor: theme.primary + '15',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 12,
@@ -731,7 +767,7 @@ const styles = StyleSheet.create({
   categoryBadgeText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#1d4ed8',
+    color: theme.primary,
     alignItems: 'center'
   },
 
@@ -746,7 +782,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#64748b',
+    color: theme.textSecondary,
   },
 
   // Empty State
@@ -760,14 +796,14 @@ const styles = StyleSheet.create({
   emptyStateTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#1e293b',
+    color: theme.text,
     marginTop: 16,
     marginBottom: 8,
   },
 
   emptyStateText: {
     fontSize: 16,
-    color: '#64748b',
+    color: theme.textSecondary,
     textAlign: 'center',
     paddingHorizontal: 32,
   },

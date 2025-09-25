@@ -1,4 +1,5 @@
 // app/productbycategory/[id].tsx
+import { useFavourite } from '@/contexts/FavouriteContext';
 import { BASE_URL } from '@env';
 import { AntDesign } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -32,13 +33,13 @@ type Product = {
 };
 
 export default function ProductByCategoryScreen() {
-
-    const { id } = useLocalSearchParams();
+    const { toggleFavourite, isFavourite } = useFavourite();
     const [products, setProducts] = useState<Product[]>([]);
     const [search, setSearch] = useState("");
     const [refreshing, setRefreshing] = useState(false);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
+    const { id } = useLocalSearchParams();
 
     const fetchProducts = async () => {
         try {
@@ -96,8 +97,19 @@ export default function ProductByCategoryScreen() {
                     )}
 
                     {/* Heart button */}
-                    <TouchableOpacity style={styles.favoriteButton}>
-                        <AntDesign name="hearto" size={16} color="#666" />
+                    <TouchableOpacity onPress={async () => {
+                        try {
+                            await toggleFavourite(item._id, "Product")
+                            router.push('/(drawer)/(tabs)/favourite')
+                        } catch (error) {
+                            console.log("Toggle failed", error)
+                        }
+                    }} style={[styles.favoriteButton, isFavourite(item._id) && styles.favoriteButtonActive]}>
+                        <AntDesign
+                            name={isFavourite(item._id) ? "heart" : "hearto"}
+                            size={16}
+                            color={isFavourite(item._id) ? "white" : "#666"}
+                        />
                     </TouchableOpacity>
                 </View>
 
@@ -347,6 +359,10 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
+    },
+
+    favoriteButtonActive: {
+        backgroundColor: '#ef4444',
     },
 
     // Product info
