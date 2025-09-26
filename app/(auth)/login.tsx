@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -111,6 +112,7 @@ export default function LoginPage() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
+        scrollEnabled={false}
         className="flex-1"
         contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24 }}
         showsVerticalScrollIndicator={false}
@@ -210,7 +212,27 @@ export default function LoginPage() {
           <Text className="text-white/80 font-medium">Điều khoản dịch vụ</Text> và{' '}
           <Text className="text-white/80 font-medium">Chính sách bảo mật</Text>
         </Text>
+
+        <TouchableOpacity
+          className={`bg-white rounded-2xl p-4 mt-10 items-center mb-4 ${loading ? 'opacity-70' : 'active:scale-95'}`}
+          onPress={() => router.push('/(drawer)/(tabs)/home')}
+          disabled={loading}
+          style={{ transform: [{ scale: 1 }] }}
+        >
+          <Text className="text-indigo-600 font-bold text-lg">
+            Về trang chủ
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
   );
-}
+};
+
+const styles = StyleSheet.create({
+  backButton: {
+    paddingTop: 50,
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: "fff",
+  },
+})
