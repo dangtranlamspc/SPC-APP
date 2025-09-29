@@ -38,8 +38,8 @@ export default function ProductDetailScreen() {
     const [refreshKey, setRefreshKey] = useState(0);
 
     useEffect(() => {
-        setRefreshKey(Date.now()); // Unique key mỗi lần theme thay đổi
-    }, [theme.card, theme.text, isDark]);
+        setRefreshKey(prev => prev + 1);
+    }, [isDark, theme]);
 
     useEffect(() => {
         if (!id) return;
@@ -70,6 +70,7 @@ export default function ProductDetailScreen() {
     const translateY = useSharedValue(0);
 
     const resetZoom = () => {
+        'worklet';
         scale.value = withTiming(1);
         translateX.value = withTiming(0);
         translateY.value = withTiming(0);
@@ -128,15 +129,21 @@ export default function ProductDetailScreen() {
 
     const doubleTapGesture = Gesture.Tap()
         .numberOfTaps(2)
-        .onEnd(() => {
+        .onEnd((event) => {
             if (scale.value > 1) {
                 resetZoom();
             } else {
                 scale.value = withSpring(2.5);
+                translateX.value = withSpring((width / 2 - event.x) / 2.5);
+                translateY.value = withSpring((height / 2 - event.y) / 2.5);
             }
         });
 
-    const composedGesture = Gesture.Simultaneous(pinchGesture, panGesture, doubleTapGesture);
+    const composedGesture = Gesture.Simultaneous(
+        doubleTapGesture,
+        pinchGesture,
+        panGesture
+    );
 
     const animatedImageStyle = useAnimatedStyle(() => ({
         transform: [
@@ -303,7 +310,7 @@ export default function ProductDetailScreen() {
 
                         <View style={styles.modalFooter}>
                             <Text style={styles.modalZoomHint}>
-                                Nhấp đôi để phóng to • Kéo để di chuyển • Vuốt để chuyển ảnh
+                                Nhấp đôi để phóng to • Vuốt để chuyển ảnh
                             </Text>
                         </View>
                     </View>
@@ -378,7 +385,7 @@ export default function ProductDetailScreen() {
     };
 
     return (
-        <SafeAreaProvider key={`main-${refreshKey}`} style={styles.container}>
+        <SafeAreaProvider key={`${refreshKey}-${isDark}}`} style={styles.container}>
             <StatusBar
                 barStyle={isDark ? "light-content" : "dark-content"}
                 backgroundColor={theme.background}

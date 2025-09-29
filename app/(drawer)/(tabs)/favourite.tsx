@@ -1,5 +1,5 @@
 import { useFavourite } from '@/contexts/FavouriteContext';
-import { useProduct } from '@/contexts/ProductContext';
+import { Colors, useTheme } from '@/contexts/ThemeContext';
 import { useNavigation } from '@react-navigation/native';
 import { router } from 'expo-router';
 import React, { JSX, useEffect, useRef, useState } from 'react';
@@ -49,6 +49,7 @@ type NavigationProp = {
 
 const FavouriteScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
+  const { theme } = useTheme();
   const {
     favourites,
     loading,
@@ -62,12 +63,12 @@ const FavouriteScreen: React.FC = () => {
     clearError,
   } = useFavourite();
 
-  const { categories } = useProduct();
   const [removingItems, setRemovingItems] = useState<Set<string>>(new Set());
-
   const scaleAnim = useRef(new Animated.Value(1)).current;
-
   const { handleScroll } = useScrollTabHide();
+
+  // Create dynamic styles using theme
+  const styles = createStyles(theme);
 
   useEffect(() => {
     Animated.loop(
@@ -96,7 +97,6 @@ const FavouriteScreen: React.FC = () => {
   }, [navigation, getFavourites]);
 
   const handleRemoveFavourite = async (productId: string, productName: string, productType: 'Product' | 'ProductNongNghiepDoThi' | 'ProductConTrungGiaDung'): Promise<void> => {
-    console.log("Toggle favourite sending:", { productId, productType });
     Alert.alert(
       'Xóa khỏi yêu thích',
       `Bạn có chắc chắn muốn xóa "${productName}" khỏi danh sách yêu thích?`,
@@ -131,14 +131,10 @@ const FavouriteScreen: React.FC = () => {
     if (item.images && item.images.length > 0) {
       return item.images[0].url; // lấy url đầu tiên
     }
-    // if (item.image && typeof item.image === 'string') {
-    //   return item.image;
-    // }
     return 'https://via.placeholder.com/100';
   };
 
   const handleProductPress = (product: FavouriteProduct): void => {
-    // router.push(`/product/${product._id}`);
     switch (product.productType) {
       case 'Product':
         router.push(`/product/${product._id}`);
@@ -151,7 +147,6 @@ const FavouriteScreen: React.FC = () => {
         break;
     }
   };
-
 
   const renderFavouriteItem: ListRenderItem<FavouriteProduct> = ({ item }) => {
     const isRemoving = removingItems.has(item._id);
@@ -191,7 +186,7 @@ const FavouriteScreen: React.FC = () => {
               Đã thích: {new Date(item.favouriteAt).toLocaleDateString('vi-VN')}
             </Text>
             <View style={styles.ratingContainer}>
-              <Icon name="star" size={14} color="#FFD700" />
+              <Icon name="star" size={14} color={theme.warning} />
               <Text style={styles.rating}>
                 {item.average_rating?.toFixed(1) || '0.0'}
               </Text>
@@ -205,10 +200,10 @@ const FavouriteScreen: React.FC = () => {
           disabled={isRemoving}
         >
           {isRemoving ? (
-            <ActivityIndicator size="small" color="#FF6B6B" />
+            <ActivityIndicator size="small" color={theme.error} />
           ) : (
             <Animated.View style={[{ transform: [{ scale: scaleAnim }] }]}>
-              <Icon name="favorite" size={24} color="#FF6B6B" />
+              <Icon name="favorite" size={24} color={theme.error} />
             </Animated.View>
           )}
         </TouchableOpacity>
@@ -218,7 +213,7 @@ const FavouriteScreen: React.FC = () => {
 
   const renderEmptyState = (): JSX.Element => (
     <View style={styles.emptyState}>
-      <Icon name="favorite-border" size={80} color="#E0E0E0" />
+      <Icon name="favorite-border" size={80} color={theme.textSecondary} />
       <Text style={styles.emptyTitle}>Chưa có sản phẩm yêu thích</Text>
       <Text style={styles.emptyDescription}>
         Hãy khám phá và thêm những sản phẩm bạn yêu thích vào danh sách này
@@ -234,7 +229,7 @@ const FavouriteScreen: React.FC = () => {
 
   const renderError = (): JSX.Element => (
     <View style={styles.errorState}>
-      <Icon name="error-outline" size={80} color="#FF6B6B" />
+      <Icon name="error-outline" size={80} color={theme.error} />
       <Text style={styles.errorTitle}>Có lỗi xảy ra</Text>
       <Text style={styles.errorDescription}>{error}</Text>
       <TouchableOpacity
@@ -254,7 +249,7 @@ const FavouriteScreen: React.FC = () => {
 
     return (
       <View style={styles.footerLoader}>
-        <ActivityIndicator size="small" color="#007AFF" />
+        <ActivityIndicator size="small" color={theme.primary} />
         <Text style={styles.footerLoaderText}>Đang tải thêm...</Text>
       </View>
     );
@@ -297,7 +292,8 @@ const FavouriteScreen: React.FC = () => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={refreshFavourites}
-              colors={['#007AFF']}
+              colors={[theme.primary]}
+              tintColor={theme.primary}
             />
           }
           onEndReached={() => {
@@ -312,7 +308,7 @@ const FavouriteScreen: React.FC = () => {
 
       {loading && favourites.length === 0 && (
         <View style={styles.initialLoader}>
-          <ActivityIndicator size="large" color="#007AFF" />
+          <ActivityIndicator size="large" color={theme.primary} />
           <Text style={styles.loaderText}>Đang tải...</Text>
         </View>
       )}
@@ -320,17 +316,17 @@ const FavouriteScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: Colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA'
+    backgroundColor: theme.background
   },
   header: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.surface,
     paddingHorizontal: 20,
     paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#E8E8E8',
+    borderBottomColor: theme.border,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center'
@@ -338,22 +334,22 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333333'
+    color: theme.text
   },
   itemCount: {
     fontSize: 14,
-    color: '#666666'
+    color: theme.textSecondary
   },
   listContainer: {
     padding: 15
   },
   favouriteItem: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderRadius: 12,
     padding: 15,
     marginBottom: 15,
     flexDirection: 'row',
-    shadowColor: '#000',
+    shadowColor: theme.text,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -371,20 +367,6 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 8
   },
-  discountBadge: {
-    position: 'absolute',
-    top: -5,
-    right: -5,
-    backgroundColor: '#FF6B6B',
-    borderRadius: 10,
-    paddingHorizontal: 6,
-    paddingVertical: 2
-  },
-  discountText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: 'bold'
-  },
   productInfo: {
     flex: 1,
     justifyContent: 'space-between'
@@ -392,35 +374,14 @@ const styles = StyleSheet.create({
   productName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333333',
+    color: theme.text,
     marginBottom: 5
-  },
-  productCategory: {
-    fontSize: 12,
-    color: '#666666',
-    marginBottom: 8
-  },
-  priceContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8
-  },
-  price: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#007AFF'
-  },
-  discountPrice: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FF6B6B',
-    marginRight: 8
   },
   newBadge: {
     position: 'absolute',
     top: -5,
     right: -5,
-    backgroundColor: '#FF6B6B',
+    backgroundColor: theme.error,
     borderRadius: 10,
     paddingHorizontal: 6,
     paddingVertical: 2
@@ -430,11 +391,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold'
   },
-  originalPrice: {
-    fontSize: 14,
-    color: '#999999',
-    textDecorationLine: 'line-through'
-  },
   metaInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -442,7 +398,7 @@ const styles = StyleSheet.create({
   },
   favouritedDate: {
     fontSize: 12,
-    color: '#666666'
+    color: theme.textSecondary
   },
   ratingContainer: {
     flexDirection: 'row',
@@ -450,21 +406,21 @@ const styles = StyleSheet.create({
   },
   rating: {
     fontSize: 12,
-    color: '#666666',
+    color: theme.textSecondary,
     marginLeft: 4
   },
   categoryBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#dbeafe',
+    backgroundColor: theme.primary + '20',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 12,
+    marginBottom: 5,
   },
-
   categoryBadgeText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#1d4ed8',
+    color: theme.primary,
   },
   removeButton: {
     justifyContent: 'center',
@@ -481,25 +437,25 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333333',
+    color: theme.text,
     marginTop: 20,
     marginBottom: 10
   },
   emptyDescription: {
     fontSize: 16,
-    color: '#666666',
+    color: theme.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 30
   },
   exploreButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: theme.primary,
     paddingHorizontal: 30,
     paddingVertical: 12,
     borderRadius: 25
   },
   exploreButtonText: {
-    color: '#FFFFFF',
+    color: theme.headerText,
     fontSize: 16,
     fontWeight: '600'
   },
@@ -512,24 +468,24 @@ const styles = StyleSheet.create({
   errorTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333333',
+    color: theme.text,
     marginTop: 20,
     marginBottom: 10
   },
   errorDescription: {
     fontSize: 16,
-    color: '#666666',
+    color: theme.textSecondary,
     textAlign: 'center',
     marginBottom: 30
   },
   retryButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: theme.primary,
     paddingHorizontal: 30,
     paddingVertical: 12,
     borderRadius: 25
   },
   retryButtonText: {
-    color: '#FFFFFF',
+    color: theme.headerText,
     fontSize: 16,
     fontWeight: '600'
   },
@@ -541,7 +497,7 @@ const styles = StyleSheet.create({
   loaderText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#666666'
+    color: theme.textSecondary
   },
   footerLoader: {
     flexDirection: 'row',
@@ -552,7 +508,7 @@ const styles = StyleSheet.create({
   footerLoaderText: {
     marginLeft: 10,
     fontSize: 14,
-    color: '#666666'
+    color: theme.textSecondary
   }
 });
 

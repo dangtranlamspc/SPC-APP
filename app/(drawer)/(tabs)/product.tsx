@@ -34,12 +34,9 @@ export default function ProductListScreen() {
     loading,
     searchQuery,
     selectedCategory,
-    currentPage,
-    totalPages,
     totalProducts,
     setSearchQuery,
     setSelectedCategory,
-    setCurrentPage
   } = useProduct();
 
   const { theme, isDark } = useTheme();
@@ -674,6 +671,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
 
   imageContainer: {
+    borderRadius : 10,
     position: 'relative',
     height: CARD_WIDTH * 1.2,
     backgroundColor: theme.surface,
