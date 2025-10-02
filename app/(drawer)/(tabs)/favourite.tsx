@@ -1,6 +1,7 @@
 import { useFavourite } from '@/contexts/FavouriteContext';
 import { Colors, useTheme } from '@/contexts/ThemeContext';
-import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
+import { DrawerActions, useNavigation } from '@react-navigation/native';
 import { router } from 'expo-router';
 import React, { JSX, useEffect, useRef, useState } from 'react';
 import {
@@ -45,6 +46,7 @@ interface FavouriteProduct {
 type NavigationProp = {
   navigate: (screen: string, params?: any) => void;
   addListener: (event: string, callback: () => void) => () => void;
+  dispatch: (action: any) => void;
 };
 
 const FavouriteScreen: React.FC = () => {
@@ -266,9 +268,16 @@ const FavouriteScreen: React.FC = () => {
     );
   }
 
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.menuButton}
+          onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
+        >
+          <Ionicons name="menu" size={28} color={theme.text} />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Sản phẩm yêu thích</Text>
         {favourites.length > 0 && (
           <Text style={styles.itemCount}>
@@ -385,6 +394,9 @@ const createStyles = (theme: Colors) => StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 6,
     paddingVertical: 2
+  },
+  menuButton: {
+    padding: 8,
   },
   newText: {
     color: '#FFFFFF',

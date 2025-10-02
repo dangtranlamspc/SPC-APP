@@ -22,7 +22,7 @@ export default function ProductNewComponent() {
   }, [isDark, theme]);
 
 
-  const ProductCard = React.memo(({ item }: { item: Product }) => {
+  const ProductCard = React.memo(({ item, theme, isDark }: { item: Product, theme : any, isDark : boolean }) => {
     const firstImage = useMemo(() => {
       return Array.isArray(item.images) && item.images.length > 0
         ? (typeof item.images[0] === 'string' ? item.images[0] : item.images[0].url)
@@ -69,7 +69,7 @@ export default function ProductNewComponent() {
   });
 
   const renderProductCard = useCallback(({ item }: { item: Product }) => (
-    <ProductCard item={item} />
+    <ProductCard item={item} theme={theme} isDark={isDark} />
   ), [theme, isDark]);
 
   useEffect(() => {

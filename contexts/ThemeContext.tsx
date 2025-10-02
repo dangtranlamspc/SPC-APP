@@ -102,6 +102,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const isDark = themeMode === 'dark' || (themeMode === 'system' && systemTheme === 'dark');
   const theme = isDark ? darkTheme : lightTheme;
 
+
   useEffect(() => {
     loadThemeMode();
     

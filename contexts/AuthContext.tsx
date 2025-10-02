@@ -11,8 +11,10 @@ interface User {
 
 interface AuthContextType {
     user: User | null;
+    token: string | null;
     isLoading: boolean;
     isLoggedIn: boolean;
+    getToken: () => Promise<string | null>;
     login: (email: string, password: string) => Promise<void>;
     register: (name: string, email: string, password: string) => Promise<void>;
     logout: () => Promise<void>;
@@ -29,6 +31,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [token, setToken] = useState<string | null>(null);
 
     useEffect(() => {
         checkAuthStatus();
@@ -64,6 +67,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             await AsyncStorage.setItem('token', data.token);
             await AsyncStorage.setItem('user', JSON.stringify(data.user));
             setUser(data.user);
+            setToken(data.token);
             setIsLoggedIn(true);
 
         } else {
@@ -183,6 +187,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     }
 
+    const getToken = async () => {
+        if (token) return token; // lấy từ state cho nhanh
+        const storedToken = await SecureStore.getItemAsync('token');
+        return storedToken;
+    };
+
     const logout = async () => {
         await clearAllData()
     }
@@ -198,6 +208,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             clearAllData,
             isLoggedIn,
             changePassword,
+            getToken,
+            token
         }}>
             {children}
         </AuthContext.Provider>

@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   RefreshControl,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,6 +12,8 @@ import {
 } from 'react-native';
 
 import { useNotificationActions, useNotificationData } from '@/contexts/NotificationContext';
+import { Colors, useTheme } from '@/contexts/ThemeContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Component cho từng notification item
 const NotificationItem = ({
@@ -20,11 +21,13 @@ const NotificationItem = ({
   onPress,
   onMarkAsRead,
   onDelete,
+  theme,
 }: {
   notification: any;
   onPress: () => void;
   onMarkAsRead: () => void;
   onDelete: () => void;
+  theme: Colors;
 }) => {
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -38,11 +41,11 @@ const NotificationItem = ({
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'success': return '#10B981';
-      case 'warning': return '#F59E0B';
-      case 'error': return '#EF4444';
-      case 'system': return '#6B7280';
-      default: return '#3B82F6';
+      case 'success': return theme.success;
+      case 'warning': return theme.warning;
+      case 'error': return theme.error;
+      case 'system': return theme.textSecondary;
+      default: return theme.primary;
     }
   };
 
@@ -64,6 +67,8 @@ const NotificationItem = ({
     }
   };
 
+  const styles = createItemStyles(theme);
+
   return (
     <TouchableOpacity
       style={[
@@ -74,13 +79,11 @@ const NotificationItem = ({
       onPress={onPress}
       activeOpacity={0.7}
     >
-      {/* Priority indicator */}
       {notification.priority === 'high' && (
         <View style={styles.priorityIndicator} />
       )}
 
       <View style={styles.itemContent}>
-        {/* Icon */}
         <View style={[styles.iconContainer, { backgroundColor: getTypeColor(notification.type) + '20' }]}>
           <Ionicons
             name={getTypeIcon(notification.type)}
@@ -89,7 +92,6 @@ const NotificationItem = ({
           />
         </View>
 
-        {/* Content */}
         <View style={styles.textContent}>
           <Text style={[styles.title, !notification.isRead && styles.unreadTitle]}>
             {notification.title}
@@ -102,26 +104,24 @@ const NotificationItem = ({
           </Text>
         </View>
 
-        {/* Actions */}
         <View style={styles.actions}>
           {!notification.isRead && (
             <TouchableOpacity
               onPress={onMarkAsRead}
               style={styles.actionButton}
             >
-              <Ionicons name="checkmark" size={20} color="#10B981" />
+              <Ionicons name="checkmark" size={20} color={theme.success} />
             </TouchableOpacity>
           )}
           <TouchableOpacity
             onPress={onDelete}
             style={styles.actionButton}
           >
-            <Ionicons name="trash-outline" size={20} color="#EF4444" />
+            <Ionicons name="trash-outline" size={20} color={theme.error} />
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Unread dot */}
       {!notification.isRead && (
         <View style={styles.unreadDot} />
       )}
@@ -130,17 +130,17 @@ const NotificationItem = ({
 };
 
 const NotificationsScreen = () => {
+  const { theme, isDark } = useTheme();
   const { notifications, unreadCount, loading, refreshing } = useNotificationData();
   const { fetchNotifications, refreshNotifications, markAsRead, deleteNotification, markAllAsRead } = useNotificationActions();
-
   const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all');
 
-  // Fetch lần đầu
+  const styles = React.useMemo(() => createStyles(theme), [theme]);
+
   useEffect(() => {
     fetchNotifications();
   }, []);
 
-  // Filter notifications
   const filteredNotifications = notifications.filter(notif => {
     switch (filter) {
       case 'unread': return !notif.isRead;
@@ -153,7 +153,7 @@ const NotificationsScreen = () => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#3B82F6" />
+          <ActivityIndicator size="large" color={theme.primary} />
           <Text style={styles.loadingText}>Đang tải thông báo...</Text>
         </View>
       </SafeAreaView>
@@ -168,7 +168,7 @@ const NotificationsScreen = () => {
           onPress={() => router.back()}
           style={styles.backButton}
         >
-          <Ionicons name="arrow-back" size={24} color="#374151" />
+          <Ionicons name="arrow-back" size={24} color={theme.text} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>Thông báo</Text>
@@ -179,7 +179,7 @@ const NotificationsScreen = () => {
           )}
         </View>
         <TouchableOpacity onPress={markAllAsRead} style={styles.headerAction}>
-          <Ionicons name="checkmark-done" size={24} color="#3B82F6" />
+          <Ionicons name="checkmark-done" size={24} color={theme.primary} />
         </TouchableOpacity>
       </View>
 
@@ -206,7 +206,7 @@ const NotificationsScreen = () => {
       {/* Content */}
       {filteredNotifications.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Ionicons name="notifications-off" size={64} color="#9CA3AF" />
+          <Ionicons name="notifications-off" size={64} color={theme.textSecondary} />
           <Text style={styles.emptyTitle}>Không có thông báo</Text>
           <Text style={styles.emptyMessage}>
             {filter === 'unread'
@@ -220,7 +220,12 @@ const NotificationsScreen = () => {
         <ScrollView
           style={styles.scrollView}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={refreshNotifications} />
+            <RefreshControl 
+              refreshing={refreshing} 
+              onRefresh={refreshNotifications}
+              tintColor={theme.primary}
+              colors={[theme.primary]}
+            />
           }
         >
           {filteredNotifications.map(notification => (
@@ -230,6 +235,7 @@ const NotificationsScreen = () => {
               onPress={() => markAsRead(notification._id)}
               onMarkAsRead={() => markAsRead(notification._id)}
               onDelete={() => deleteNotification(notification._id)}
+              theme={theme}
             />
           ))}
         </ScrollView>
@@ -238,10 +244,10 @@ const NotificationsScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: Colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: theme.background,
   },
   loadingContainer: {
     flex: 1,
@@ -251,17 +257,17 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#6B7280',
+    color: theme.textSecondary,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: 'white',
+    backgroundColor: theme.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: theme.border,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: theme.text,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -277,10 +283,10 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#111827',
+    color: theme.text,
   },
   badge: {
-    backgroundColor: '#EF4444',
+    backgroundColor: theme.error,
     borderRadius: 10,
     minWidth: 20,
     height: 20,
@@ -298,11 +304,11 @@ const styles = StyleSheet.create({
   },
   filterTabs: {
     flexDirection: 'row',
-    backgroundColor: 'white',
+    backgroundColor: theme.card,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: theme.border,
   },
   filterTab: {
     flex: 1,
@@ -315,18 +321,18 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   activeFilterTab: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: theme.primary,
   },
   filterTabText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#6B7280',
+    color: theme.textSecondary,
   },
   activeFilterTabText: {
     color: 'white',
   },
   filterBadge: {
-    backgroundColor: '#EF4444',
+    backgroundColor: theme.error,
     borderRadius: 8,
     minWidth: 16,
     height: 16,
@@ -342,24 +348,48 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: theme.text,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyMessage: {
+    fontSize: 14,
+    color: theme.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+});
+
+const createItemStyles = (theme: Colors) => StyleSheet.create({
   notificationItem: {
-    backgroundColor: 'white',
+    backgroundColor: theme.card,
     marginHorizontal: 16,
     marginVertical: 4,
     borderRadius: 12,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: theme.text,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
     position: 'relative',
+    borderWidth: 1,
+    borderColor: theme.border,
   },
   unreadItem: {
     borderLeftWidth: 4,
-    borderLeftColor: '#3B82F6',
+    borderLeftColor: theme.primary,
   },
   highPriorityItem: {
-    borderLeftColor: '#EF4444',
+    borderLeftColor: theme.error,
   },
   priorityIndicator: {
     position: 'absolute',
@@ -367,7 +397,7 @@ const styles = StyleSheet.create({
     right: 0,
     width: 8,
     height: 8,
-    backgroundColor: '#EF4444',
+    backgroundColor: theme.error,
     borderRadius: 4,
     margin: 8,
   },
@@ -390,22 +420,22 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#374151',
+    color: theme.text,
     marginBottom: 4,
   },
   unreadTitle: {
     fontWeight: 'bold',
-    color: '#111827',
+    color: theme.text,
   },
   message: {
     fontSize: 14,
-    color: '#6B7280',
+    color: theme.textSecondary,
     lineHeight: 20,
     marginBottom: 8,
   },
   time: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: theme.textSecondary,
   },
   actions: {
     flexDirection: 'row',
@@ -421,44 +451,8 @@ const styles = StyleSheet.create({
     right: 12,
     width: 8,
     height: 8,
-    backgroundColor: '#3B82F6',
+    backgroundColor: theme.primary,
     borderRadius: 4,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#374151',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  emptyMessage: {
-    fontSize: 14,
-    color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  clearAllButton: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
-    margin: 16,
-    backgroundColor: 'white',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#FCA5A5',
-  },
-  clearAllText: {
-    marginLeft: 8,
-    fontSize: 14,
-    color: '#EF4444',
-    fontWeight: '500',
   },
 });
 

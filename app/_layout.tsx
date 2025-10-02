@@ -48,7 +48,7 @@ function AppContent() {
       > 
         <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false}} />
-        <Stack.Screen name="productbycategory/[id]" options={{ headerShown: false }} />
+        {/* <Stack.Screen name="productbycategory/[id]" options={{ headerShown: false }} /> */}
       </Stack>
     </GestureHandlerRootView>
   );

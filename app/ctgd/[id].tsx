@@ -6,7 +6,6 @@ import {
     Dimensions,
     Image,
     Modal,
-    SafeAreaView,
     ScrollView,
     StatusBar,
     StyleSheet,
@@ -16,11 +15,11 @@ import {
 } from 'react-native';
 
 import HtmlDescription from '@/components/HtmlDescription';
-import { useFavourite } from '@/contexts/FavouriteContext';
 import { useProduct } from '@/contexts/ProductCTGDContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
 
@@ -29,9 +28,8 @@ export default function ProductDetailScreen() {
     const { getProduct } = useProduct();
     const [loading, setLoading] = useState(true);
     const [product, setProduct] = useState<any>(null);
-    const { favourites } = useFavourite();
     const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0);
-
+    const { theme, isDark } = useTheme();
     const [isImageModalVisible, setIsImageModalVisible] = useState(false);
     const [modalImageIndex, setModalImageIndex] = useState(0);
 
@@ -139,6 +137,8 @@ export default function ProductDetailScreen() {
             { translateY: translateY.value },
         ],
     }));
+
+    const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
     if (loading) {
         return (
@@ -296,9 +296,9 @@ export default function ProductDetailScreen() {
         <View style={styles.infoSection}>
             <Text style={styles.productTitle}>{product.name}</Text>
 
-            {product.category && (
+            {product.categoryctgd && (
                 <View style={styles.categoryBadge}>
-                    <Text style={styles.categoryBadgeText}>{product.category.name}</Text>
+                    <Text style={styles.categoryBadgeText}>{product.categoryctgd.name}</Text>
                 </View>
             )}
 
@@ -337,7 +337,10 @@ export default function ProductDetailScreen() {
     return (
         <SafeAreaProvider style={styles.container}>
             {renderHeader()}
-
+            <StatusBar
+                barStyle={isDark ? "light-content" : "dark-content"}
+                backgroundColor={theme.background}
+            />
             <ScrollView
                 style={styles.content}
                 showsVerticalScrollIndicator={false}
@@ -349,23 +352,30 @@ export default function ProductDetailScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8fafc',
+        backgroundColor: theme.background,
         paddingTop: 50,
     },
 
     // Header Styles
     header: {
-        backgroundColor: 'white',
+        backgroundColor: theme.card,
         paddingHorizontal: 16,
         paddingVertical: 12,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         borderBottomWidth: 1,
-        borderBottomColor: '#e2e8f0',
+        borderBottomColor: theme.border,
+        ...(!isDark ? {
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 3,
+        } : {}),
     },
 
     headerContent: {
@@ -376,16 +386,18 @@ const styles = StyleSheet.create({
     },
 
     htmlContainer: {
-        backgroundColor: '#f8fafc',
+        backgroundColor: theme.surface,
         borderRadius: 12,
         padding: 16,
         marginTop: 8,
+        borderWidth: 1,
+        borderColor: theme.border,
     },
 
     headerTitle: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#1e293b',
+        color: theme.text,
         flex: 1,
         marginHorizontal: 16,
     },
@@ -478,6 +490,7 @@ const styles = StyleSheet.create({
     backButton: {
         padding: 8,
         borderRadius: 20,
+        backgroundColor: theme.background + '80',
     },
     ratingBadge: {
         position: 'absolute',
@@ -493,7 +506,7 @@ const styles = StyleSheet.create({
     },
 
     ratingText: {
-        color: 'white',
+        color: theme.text,
         fontSize: 12,
         fontWeight: '500',
     },
@@ -505,24 +518,26 @@ const styles = StyleSheet.create({
     productName: {
         fontSize: 14,
         fontWeight: '700',
-        color: '#1a1a1a',
+        color: theme.text,
         marginBottom: 8,
         lineHeight: 18,
     },
 
     categoryBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
         alignSelf: 'flex-start',
-        backgroundColor: '#dbeafe',
-        paddingHorizontal: 8,
-        paddingVertical: 3,
+        backgroundColor: theme.primary + '15',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
         borderRadius: 12,
         marginBottom: 16,
     },
 
     categoryBadgeText: {
-        fontSize: 11,
+        fontSize: 15,
         fontWeight: '600',
-        color: '#1d4ed8',
+        color: theme.primary,
     },
 
     // Product Detail Styles
@@ -531,14 +546,15 @@ const styles = StyleSheet.create({
     },
 
     imageSection: {
-        backgroundColor: 'white',
+        backgroundColor: theme.card,
         paddingBottom: 16,
     },
 
     mainImageContainer: {
         width: width,
         height: width * 1.1,
-        backgroundColor: '#f8f9fa',
+        backgroundColor: theme.surface,
+        position: 'relative',
     },
 
     mainImage: {
@@ -551,7 +567,10 @@ const styles = StyleSheet.create({
         height: '100%',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#e9ecef',
+        backgroundColor: theme.surface,
+        borderWidth: 1,
+        borderColor: theme.border,
+        borderStyle: 'dashed',
     },
 
     thumbnailContainer: {
@@ -569,11 +588,11 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         overflow: 'hidden',
         borderWidth: 2,
-        borderColor: '#e2e8f0',
+        borderColor: theme.border,
     },
 
     thumbnailActive: {
-        borderColor: '#2563eb',
+        borderColor: theme.primary,
     },
 
     thumbnailImage: {
@@ -582,7 +601,7 @@ const styles = StyleSheet.create({
     },
 
     infoSection: {
-        backgroundColor: 'white',
+        backgroundColor: theme.card,
         padding: 16,
         marginTop: 8,
     },
@@ -590,7 +609,7 @@ const styles = StyleSheet.create({
     productTitle: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#1e293b',
+        color: theme.text,
         marginBottom: 12,
         lineHeight: 30,
     },
@@ -613,7 +632,7 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#1e293b',
+        color: theme.text,
         marginBottom: 12,
     },
 
@@ -627,14 +646,14 @@ const styles = StyleSheet.create({
     notFoundTitle: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#1e293b',
+        color: theme.text,
         marginBottom: 8,
         textAlign: 'center',
     },
 
     notFoundText: {
         fontSize: 16,
-        color: '#64748b',
+        color: theme.textSecondary,
         textAlign: 'center',
     },
 });

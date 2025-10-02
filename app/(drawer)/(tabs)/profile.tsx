@@ -1,6 +1,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Ionicons } from "@expo/vector-icons";
+import { DrawerActions, useNavigation } from "@react-navigation/native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect } from "react";
 import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -15,6 +16,8 @@ export default function ProfileScreen() {
       checkAuthStatus();
     }, [])
   );
+
+  const navigation = useNavigation();
 
   useEffect(() => {
     if (!isLoading && isLoggedIn === false) {
@@ -69,12 +72,18 @@ export default function ProfileScreen() {
       router.replace('/(auth)/login');
       return;
     }
-    
+
     Alert.alert('Thông báo', 'Chức năng đang phát triển');
   };
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity
+        style={styles.menuButton}
+        onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
+      >
+        <Ionicons name="menu" size={28} color={theme.text} />
+      </TouchableOpacity>
       {/* Profile Header Section */}
       <View style={styles.profileSection}>
         <View style={styles.avatarLarge}>
@@ -153,7 +162,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.background,
-    paddingTop: 50,
+    paddingTop: 60,
   },
   centered: {
     justifyContent: 'center',
@@ -212,6 +221,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontSize: 16,
     color: theme.textSecondary,
     marginBottom: 20,
+  },
+  menuButton: {
+    padding: 8,
   },
   editButton: {
     backgroundColor: theme.primary,

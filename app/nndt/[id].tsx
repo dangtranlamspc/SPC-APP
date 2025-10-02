@@ -6,7 +6,6 @@ import {
     Dimensions,
     Image,
     Modal,
-    SafeAreaView,
     ScrollView,
     StatusBar,
     StyleSheet,
@@ -18,30 +17,32 @@ import {
 import HtmlDescription from '@/components/HtmlDescription';
 import { useFavourite } from '@/contexts/FavouriteContext';
 import { useProduct } from '@/contexts/ProductNNDTContext';
+import { Colors, useTheme } from '@/contexts/ThemeContext';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
 
 export default function ProductDetailScreen() {
+    const { theme, isDark } = useTheme();
     const { id } = useLocalSearchParams<{ id: string }>();
     const { getProduct } = useProduct();
     const [loading, setLoading] = useState(true);
     const [product, setProduct] = useState<any>(null);
     const { favourites } = useFavourite();
     const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0);
-
     const [isImageModalVisible, setIsImageModalVisible] = useState(false);
     const [modalImageIndex, setModalImageIndex] = useState(0);
+
+    const styles = createStyles(theme);
 
     useEffect(() => {
         if (!id) return;
 
         setLoading(true);
-        setProduct(null); // reset để tránh hiển thị dữ liệu cũ
+        setProduct(null);
 
-        // giả sử getProduct có thể async hoặc sync
         const data = getProduct(id);
         if (data instanceof Promise) {
             data.then(p => setProduct(p)).finally(() => setLoading(false));
@@ -55,7 +56,6 @@ export default function ProductDetailScreen() {
     const translateX = useSharedValue(0);
     const translateY = useSharedValue(0);
 
-    // Reset zoom
     const resetZoom = () => {
         scale.value = withTiming(1);
         translateX.value = withTiming(0);
@@ -86,21 +86,18 @@ export default function ProductDetailScreen() {
             resetZoom();
         }
     };
-    // Pinch
+
     const pinchGesture = Gesture.Pinch()
         .onUpdate((event) => {
             scale.value = Math.max(1, Math.min(event.scale, 4));
         });
 
-    // Pan
     const panGesture = Gesture.Pan()
         .onUpdate((event) => {
             if (scale.value > 1) {
-                // Nếu đang zoom thì kéo ảnh
                 translateX.value = event.translationX;
                 translateY.value = event.translationY;
             } else {
-                // Nếu scale=1 thì vuốt để chuyển ảnh
                 translateX.value = event.translationX;
             }
         })
@@ -116,22 +113,18 @@ export default function ProductDetailScreen() {
             translateY.value = withTiming(0);
         });
 
-    // Double tap
     const doubleTapGesture = Gesture.Tap()
         .numberOfTaps(2)
         .onEnd(() => {
             if (scale.value > 1) {
                 resetZoom();
             } else {
-                // Zoom in
                 scale.value = withSpring(2.5);
             }
         });
 
-    // Combine
     const composedGesture = Gesture.Simultaneous(pinchGesture, panGesture, doubleTapGesture);
 
-    // Animated style
     const animatedImageStyle = useAnimatedStyle(() => ({
         transform: [
             { scale: scale.value },
@@ -145,26 +138,23 @@ export default function ProductDetailScreen() {
             <SafeAreaView style={styles.container}>
                 <View style={styles.header}>
                     <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                        <Ionicons name="arrow-back" size={24} color="#64748b" />
+                        <Ionicons name="arrow-back" size={24} color={theme.text} />
                     </TouchableOpacity>
                 </View>
                 <View style={styles.notFoundContainer}>
-                    <Text style={styles.notFoundTitle}>Product Not Found</Text>
-                    <Text style={styles.notFoundText}>The product you're looking for doesn't exist.</Text>
+                    <Text style={styles.notFoundTitle}>Loading...</Text>
+                    <Text style={styles.notFoundText}>Please wait</Text>
                 </View>
             </SafeAreaView>
         );
     }
-
-
-    // const product = id ? getProduct(id) : undefined;
 
     if (!product || !id) {
         return (
             <SafeAreaView style={styles.container}>
                 <View style={styles.header}>
                     <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                        <Ionicons name="arrow-back" size={24} color="#64748b" />
+                        <Ionicons name="arrow-back" size={24} color={theme.text} />
                     </TouchableOpacity>
                 </View>
                 <View style={styles.notFoundContainer}>
@@ -187,26 +177,14 @@ export default function ProductDetailScreen() {
     const renderHeader = () => (
         <View style={styles.header}>
             <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                <Ionicons name="arrow-back" size={24} color="#64748b" />
+                <Ionicons name="arrow-back" size={24} color={theme.text} />
             </TouchableOpacity>
 
             <Text style={styles.headerTitle} numberOfLines={1}>
                 {product.name}
             </Text>
-
-            {/* <TouchableOpacity
-                onPress={() => toggleFavorite(product._id)}
-                style={styles.favoriteHeaderButton}
-            >
-                <Ionicons
-                    name={isFavorite ? "heart" : "heart-outline"}
-                    size={20}
-                    color={isFavorite ? "#ef4444" : "#64748b"}
-                />
-            </TouchableOpacity> */}
         </View>
     );
-
 
     const renderImageGallery = () => (
         <View style={styles.imageSection}>
@@ -221,7 +199,7 @@ export default function ProductDetailScreen() {
                     </TouchableOpacity>
                 ) : (
                     <View style={styles.placeholderMainImage}>
-                        <Ionicons name="image-outline" size={64} color="#94a3b8" />
+                        <Ionicons name="image-outline" size={64} color={theme.textSecondary} />
                     </View>
                 )}
             </View>
@@ -243,9 +221,6 @@ export default function ProductDetailScreen() {
                             ]}
                         >
                             <Image
-                                // source={{
-                                //     uri: typeof image === 'string' ? image : image.url
-                                // }}
                                 source={{ uri: getImageUrl(image) }}
                                 style={styles.thumbnailImage}
                                 resizeMode='center'
@@ -263,7 +238,6 @@ export default function ProductDetailScreen() {
             <Modal visible={isImageModalVisible} transparent animationType="fade">
                 <StatusBar backgroundColor="rgba(0,0,0,0.9)" barStyle="light-content" />
                 <View style={styles.modalContainer}>
-                    {/* Header */}
                     <View style={styles.modalHeader}>
                         <TouchableOpacity onPress={closeImageModal} style={styles.modalCloseButton}>
                             <Ionicons name="close" size={28} color="#fff" />
@@ -273,11 +247,9 @@ export default function ProductDetailScreen() {
                         </Text>
                     </View>
 
-                    {/* Image with gestures */}
                     <View style={styles.modalImageContainer}>
                         <GestureDetector gesture={composedGesture}>
                             <Animated.Image
-                                // source={{ uri: modalImage }}
                                 source={{ uri: getImageUrl(modalImage) }}
                                 style={[styles.modalImage, animatedImageStyle]}
                                 resizeMode="contain"
@@ -307,7 +279,7 @@ export default function ProductDetailScreen() {
                                 key={i}
                                 name={i < Math.floor(product.average_rating!) ? "star" : "star-outline"}
                                 size={20}
-                                color="#fbbf24"
+                                color={theme.warning}
                             />
                         ))}
                     </View>
@@ -320,8 +292,6 @@ export default function ProductDetailScreen() {
             {product.description && (
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>HƯỚNG DẪN SỬ DỤNG</Text>
-                    {/* <Text style={styles.description}>{product.description}</Text> */}
-
                     <HtmlDescription
                         htmlContent={product.description}
                         containerStyle={styles.htmlContainer}
@@ -333,6 +303,7 @@ export default function ProductDetailScreen() {
 
     return (
         <SafeAreaProvider style={styles.container}>
+            <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
             {renderHeader()}
 
             <ScrollView
@@ -346,23 +317,22 @@ export default function ProductDetailScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: Colors) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8fafc',
+        backgroundColor: theme.background,
         paddingTop: 50,
     },
 
-    // Header Styles
     header: {
-        backgroundColor: 'white',
+        backgroundColor: theme.card,
         paddingHorizontal: 16,
         paddingVertical: 12,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         borderBottomWidth: 1,
-        borderBottomColor: '#e2e8f0',
+        borderBottomColor: theme.border,
     },
 
     headerContent: {
@@ -373,7 +343,7 @@ const styles = StyleSheet.create({
     },
 
     htmlContainer: {
-        backgroundColor: '#f8fafc',
+        backgroundColor: theme.surface,
         borderRadius: 12,
         padding: 16,
         marginTop: 8,
@@ -382,7 +352,7 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#1e293b',
+        color: theme.text,
         flex: 1,
         marginHorizontal: 16,
     },
@@ -405,7 +375,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: 4,
         right: 4,
-        backgroundColor: '#3b82f6',
+        backgroundColor: theme.primary,
         borderRadius: 10,
         width: 20,
         height: 20,
@@ -425,12 +395,6 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
 
-    modalShareButton: {
-        padding: 8,
-        borderRadius: 20,
-        backgroundColor: 'rgba(255,255,255,0.1)',
-    },
-
     modalImageContainer: {
         flex: 1,
         justifyContent: 'center',
@@ -440,79 +404,24 @@ const styles = StyleSheet.create({
     modalImage: {
         width: '100%',
         height: '100%',
-        resizeMode : 'contain',
+        resizeMode: 'contain',
         alignSelf: 'center'
-
-    },
-
-    modalNavButton: {
-        position: 'absolute',
-        top: '50%',
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        borderRadius: 25,
-        padding: 12,
-        transform: [{ translateY: -25 }],
-    },
-
-    modalPrevButton: {
-        left: 16,
-    },
-
-    modalNextButton: {
-        right: 16,
-    },
-
-    modalFooter: {
-        paddingHorizontal: 16,
-        paddingVertical: 20,
-        alignItems: 'center',
-    },
-
-    modalZoomHint: {
-        color: 'rgba(255,255,255,0.7)',
-        fontSize: 12,
-        textAlign: 'center',
-        fontStyle: 'italic',
     },
 
     backButton: {
         padding: 8,
         borderRadius: 20,
     },
-    ratingBadge: {
-        position: 'absolute',
-        bottom: 8,
-        left: 8,
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        paddingHorizontal: 6,
-        paddingVertical: 3,
-        borderRadius: 8,
-        gap: 2,
-    },
 
     ratingText: {
-        color: 'white',
+        color: theme.text,
         fontSize: 12,
         fontWeight: '500',
     },
 
-    cardContent: {
-        padding: 12,
-    },
-
-    productName: {
-        fontSize: 14,
-        fontWeight: '700',
-        color: '#1a1a1a',
-        marginBottom: 8,
-        lineHeight: 18,
-    },
-
     categoryBadge: {
         alignSelf: 'flex-start',
-        backgroundColor: '#dbeafe',
+        backgroundColor: theme.primary + '20',
         paddingHorizontal: 8,
         paddingVertical: 3,
         borderRadius: 12,
@@ -522,44 +431,22 @@ const styles = StyleSheet.create({
     categoryBadgeText: {
         fontSize: 11,
         fontWeight: '600',
-        color: '#1d4ed8',
+        color: theme.primary,
     },
 
-    // Product Detail Styles
     content: {
         flex: 1,
     },
 
     imageSection: {
-        backgroundColor: 'white',
+        backgroundColor: theme.card,
         paddingBottom: 16,
     },
-
-    // mainImageContainer: {
-    //     width: '70%',
-    //     aspectRatio: 1,
-    //     alignSelf: 'center',
-    //     backgroundColor: '#f8f9fa',
-    // },
-
-    // mainImage: {
-    //     width: '100%',
-    //     height: '100%',
-    //     resizeMode: 'cover',
-    // },
-
-    // placeholderMainImage: {
-    //     width: '100%',
-    //     height: '100%',
-    //     justifyContent: 'center',
-    //     alignItems: 'center',
-    //     backgroundColor: '#e9ecef',
-    // },
 
     mainImageContainer: {
         width: width,
         height: width * 1.1,
-        backgroundColor: '#f8f9fa',
+        backgroundColor: theme.surface,
     },
 
     mainImage: {
@@ -572,7 +459,7 @@ const styles = StyleSheet.create({
         height: '100%',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#e9ecef',
+        backgroundColor: theme.surface,
     },
 
     thumbnailContainer: {
@@ -585,16 +472,16 @@ const styles = StyleSheet.create({
     },
 
     thumbnail: {
-        width: '20%',
-        aspectRatio: 1, 
+        width: 80,
+        height: 80,
         borderRadius: 12,
         overflow: 'hidden',
         borderWidth: 2,
-        borderColor: '#e2e8f0',
+        borderColor: theme.border,
     },
 
     thumbnailActive: {
-        borderColor: '#2563eb',
+        borderColor: theme.primary,
     },
 
     thumbnailImage: {
@@ -604,7 +491,7 @@ const styles = StyleSheet.create({
     },
 
     infoSection: {
-        backgroundColor: 'white',
+        backgroundColor: theme.card,
         padding: 16,
         marginTop: 8,
     },
@@ -612,7 +499,7 @@ const styles = StyleSheet.create({
     productTitle: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#1e293b',
+        color: theme.text,
         marginBottom: 12,
         lineHeight: 30,
     },
@@ -635,7 +522,7 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#1e293b',
+        color: theme.text,
         marginBottom: 12,
     },
 
@@ -649,14 +536,14 @@ const styles = StyleSheet.create({
     notFoundTitle: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#1e293b',
+        color: theme.text,
         marginBottom: 8,
         textAlign: 'center',
     },
 
     notFoundText: {
         fontSize: 16,
-        color: '#64748b',
+        color: theme.textSecondary,
         textAlign: 'center',
     },
 });

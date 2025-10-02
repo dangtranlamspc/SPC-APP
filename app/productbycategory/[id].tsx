@@ -1,9 +1,10 @@
 // app/productbycategory/[id].tsx
 import { useFavourite } from '@/contexts/FavouriteContext';
+import { Colors, useTheme } from '@/contexts/ThemeContext';
 import { BASE_URL } from '@env';
-import { AntDesign } from "@expo/vector-icons";
+import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
     ActivityIndicator,
     Dimensions,
@@ -33,6 +34,7 @@ type Product = {
 };
 
 export default function ProductByCategoryScreen() {
+    const { theme, isDark } = useTheme();
     const { toggleFavourite, isFavourite } = useFavourite();
     const [products, setProducts] = useState<Product[]>([]);
     const [search, setSearch] = useState("");
@@ -40,6 +42,8 @@ export default function ProductByCategoryScreen() {
     const [loading, setLoading] = useState(true);
     const router = useRouter();
     const { id } = useLocalSearchParams();
+
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     const fetchProducts = async () => {
         try {
@@ -56,7 +60,16 @@ export default function ProductByCategoryScreen() {
 
     useEffect(() => {
         fetchProducts();
-    }, [id, search]);
+    }, [id]);
+
+
+    const filteredBSCTs = useMemo(() =>
+        products.filter((b) =>
+            b.name.toLowerCase().includes(search.toLowerCase().trim())
+        ),
+        [products, search, theme, isDark]
+    )
+
 
     const handleRefresh = async () => {
         setRefreshing(true);
@@ -64,8 +77,8 @@ export default function ProductByCategoryScreen() {
         setRefreshing(false);
     };
 
-
     const renderItem = ({ item, index }: { item: Product; index: number }) => {
+        const styles = createStyles(theme);
         const handleProductPress = () => {
             router.push(`/product/${item._id}`);
         };
@@ -97,18 +110,24 @@ export default function ProductByCategoryScreen() {
                     )}
 
                     {/* Heart button */}
-                    <TouchableOpacity onPress={async () => {
-                        try {
-                            await toggleFavourite(item._id, "Product")
-                            router.push('/(drawer)/(tabs)/favourite')
-                        } catch (error) {
-                            console.log("Toggle failed", error)
-                        }
-                    }} style={[styles.favoriteButton, isFavourite(item._id) && styles.favoriteButtonActive]}>
-                        <AntDesign
-                            name={isFavourite(item._id) ? "heart" : "hearto"}
+                    <TouchableOpacity
+                        onPress={async () => {
+                            try {
+                                await toggleFavourite(item._id, "Product")
+                                router.push('/(drawer)/(tabs)/favourite')
+                            } catch (error) {
+                                console.log("Toggle failed", error)
+                            }
+                        }}
+                        style={[
+                            styles.favoriteButton,
+                            isFavourite(item._id) && styles.favoriteButtonActive
+                        ]}
+                    >
+                        <Ionicons
+                            name={isFavourite(item._id) ? "heart" : "heart-outline"}
                             size={16}
-                            color={isFavourite(item._id) ? "white" : "#666"}
+                            color={isFavourite(item._id) ? "white" : theme.error}
                         />
                     </TouchableOpacity>
                 </View>
@@ -123,29 +142,40 @@ export default function ProductByCategoryScreen() {
         );
     };
 
-    const renderEmptyState = () => (
-        <View style={styles.emptyContainer}>
-            <AntDesign name="inbox" size={64} color="#ccc" />
-            <Text style={styles.emptyText}>Không tìm thấy sản phẩm nào</Text>
-            <Text style={styles.emptySubText}>Hãy thử tìm kiếm với từ khóa khác</Text>
-        </View>
-    );
+    const renderEmptyState = () => {
+        const styles = createStyles(theme);
+        return (
+            <View style={styles.emptyContainer}>
+                <AntDesign name="inbox" size={64} color={theme.textSecondary} />
+                <Text style={styles.emptyText}>Không tìm thấy sản phẩm nào</Text>
+                <Text style={styles.emptySubText}>Hãy thử tìm kiếm với từ khóa khác</Text>
+            </View>
+        )
+    };
 
     if (loading) {
+        const styles = createStyles(theme);
         return (
             <SafeAreaView style={styles.container}>
-                <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+                <StatusBar
+                    barStyle={isDark ? "light-content" : "dark-content"}
+                    backgroundColor={theme.background}
+                />
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#007AFF" />
+                    <ActivityIndicator size="large" color={theme.primary} />
                     <Text style={styles.loadingText}>Đang tải sản phẩm...</Text>
                 </View>
             </SafeAreaView>
         );
-    }
+    };
 
     return (
         <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#fff" translucent={false} />
+            <StatusBar
+                barStyle={isDark ? "light-content" : "dark-content"}
+                backgroundColor={theme.background}
+                translucent={false}
+            />
 
             {/* Header */}
             <View style={styles.header}>
@@ -154,7 +184,7 @@ export default function ProductByCategoryScreen() {
                     onPress={() => router.back()}
                     activeOpacity={0.7}
                 >
-                    <AntDesign name="arrowleft" size={24} color="#333" />
+                    <Ionicons name="arrow-back" size={24} color={theme.text} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Sản phẩm</Text>
                 <View style={styles.headerRight} />
@@ -163,17 +193,17 @@ export default function ProductByCategoryScreen() {
             {/* Search bar */}
             <View style={styles.searchContainer}>
                 <View style={styles.searchBox}>
-                    <AntDesign name="search1" size={20} color="#999" style={styles.searchIcon} />
+                    <Ionicons name="search" size={20} color={theme.textSecondary} />
                     <TextInput
                         placeholder="Tìm kiếm sản phẩm..."
                         value={search}
                         onChangeText={setSearch}
                         style={styles.searchInput}
-                        placeholderTextColor="#999"
+                        placeholderTextColor={theme.textSecondary}
                     />
                     {search.length > 0 && (
                         <TouchableOpacity onPress={() => setSearch("")}>
-                            <AntDesign name="close" size={20} color="#999" />
+                            <AntDesign name="close" size={20} color={theme.textSecondary} />
                         </TouchableOpacity>
                     )}
                 </View>
@@ -181,8 +211,9 @@ export default function ProductByCategoryScreen() {
 
             {/* Products grid */}
             <FlatList
-                data={products}
-                keyExtractor={(item) => item._id}
+                data={filteredBSCTs}
+                keyExtractor={(item) => `${item._id}-${isDark}`}
+                extraData={isDark}
                 renderItem={renderItem}
                 numColumns={2}
                 contentContainerStyle={styles.gridContainer}
@@ -191,8 +222,8 @@ export default function ProductByCategoryScreen() {
                     <RefreshControl
                         refreshing={refreshing}
                         onRefresh={handleRefresh}
-                        tintColor="#007AFF"
-                        colors={["#007AFF"]}
+                        tintColor={theme.primary}
+                        colors={[theme.primary]}
                     />
                 }
                 ListEmptyComponent={renderEmptyState}
@@ -205,10 +236,10 @@ export default function ProductByCategoryScreen() {
 const { width, height } = Dimensions.get('window');
 const CARD_WIDTH = (width - 32) / 2;
 
-const styles = StyleSheet.create({
+const createStyles = (theme: Colors) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#fff",
+        backgroundColor: theme.background,
     },
 
     // Loading
@@ -220,7 +251,7 @@ const styles = StyleSheet.create({
     loadingText: {
         marginTop: 16,
         fontSize: 16,
-        color: '#666',
+        color: theme.textSecondary,
     },
 
     // Header
@@ -230,11 +261,11 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         paddingHorizontal: 16,
         paddingVertical: 12,
-        backgroundColor: "#fff",
+        backgroundColor: theme.surface,
         borderBottomWidth: 1,
-        borderBottomColor: "#f0f0f0",
+        borderBottomColor: theme.border,
         elevation: 2,
-        shadowColor: '#000',
+        shadowColor: theme.text,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
@@ -243,14 +274,14 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: "#f8f9fa",
+        backgroundColor: theme.background,
         justifyContent: 'center',
         alignItems: 'center',
     },
     headerTitle: {
         fontSize: 18,
         fontWeight: "700",
-        color: "#333",
+        color: theme.text,
         flex: 1,
         textAlign: 'center',
     },
@@ -262,23 +293,26 @@ const styles = StyleSheet.create({
     searchContainer: {
         paddingHorizontal: 16,
         paddingVertical: 12,
-        backgroundColor: "#fff",
+        backgroundColor: theme.surface,
     },
     searchBox: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: "#f8f9fa",
+        backgroundColor: theme.background,
         borderRadius: 12,
         paddingHorizontal: 12,
         height: 44,
+        borderWidth: 1,
+        borderColor: theme.border,
     },
     searchIcon: {
-        marginRight: 8,
+        marginRight: 10,
     },
     searchInput: {
         flex: 1,
         fontSize: 16,
-        color: '#333',
+        color: theme.text,
+        marginLeft: 10,
     },
 
     // Grid
@@ -294,10 +328,10 @@ const styles = StyleSheet.create({
     // Product card
     card: {
         width: CARD_WIDTH,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: theme.card,
         borderRadius: 16,
         padding: 15,
-        shadowColor: '#000',
+        shadowColor: theme.text,
         shadowOffset: {
             width: 0,
             height: 4,
@@ -306,16 +340,20 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
         elevation: 6,
         marginBottom: 4,
+        borderWidth: 1,
+        borderColor: theme.border,
     },
 
     imageContainer: {
         position: 'relative',
         height: height * 0.25,
+        borderRadius: 12,
+        overflow: 'hidden',
     },
     productImage: {
         width: '100%',
         height: '100%',
-        backgroundColor: '#f0f0f0',
+        backgroundColor: theme.surface,
     },
     imageOverlay: {
         position: 'absolute',
@@ -330,12 +368,12 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: 8,
         left: 8,
-        backgroundColor: '#ff4757',
+        backgroundColor: theme.error,
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 12,
         elevation: 2,
-        shadowColor: '#ff4757',
+        shadowColor: theme.error,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.3,
         shadowRadius: 4,
@@ -351,18 +389,21 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: 8,
         right: 8,
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        backgroundColor: theme.card,
         borderRadius: 20,
         padding: 8,
         elevation: 2,
-        shadowColor: '#000',
+        shadowColor: theme.text,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
+        borderWidth: 1,
+        borderColor: theme.border,
     },
 
     favoriteButtonActive: {
-        backgroundColor: '#ef4444',
+        backgroundColor: theme.error,
+        borderColor: theme.error,
     },
 
     // Product info
@@ -373,9 +414,8 @@ const styles = StyleSheet.create({
     productName: {
         fontSize: 16,
         fontWeight: '700',
-        color: '#333',
+        color: theme.text,
         lineHeight: 18,
-
     },
 
     // Empty state
@@ -388,12 +428,12 @@ const styles = StyleSheet.create({
     emptyText: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#666',
+        color: theme.text,
         marginTop: 16,
     },
     emptySubText: {
         fontSize: 14,
-        color: '#999',
+        color: theme.textSecondary,
         marginTop: 4,
         textAlign: 'center',
     },

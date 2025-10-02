@@ -13,7 +13,6 @@ import { router } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
   RefreshControl,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -21,6 +20,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useScrollTabHide } from './_layout';
 
 

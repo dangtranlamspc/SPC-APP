@@ -6,7 +6,6 @@ import {
     Dimensions,
     Image,
     Modal,
-    SafeAreaView,
     ScrollView,
     StatusBar,
     StyleSheet,
@@ -20,7 +19,7 @@ import { useProduct } from '@/contexts/ProductContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
 
@@ -41,6 +40,7 @@ export default function ProductDetailScreen() {
         setRefreshKey(prev => prev + 1);
     }, [isDark, theme]);
 
+
     useEffect(() => {
         if (!id) return;
 
@@ -55,15 +55,6 @@ export default function ProductDetailScreen() {
             setLoading(false);
         }
     }, [id]);
-
-    useEffect(() => {
-        console.log('Theme changed in ProductDetail:', {
-            isDark,
-            cardColor: theme.card,
-            textColor: theme.text,
-            timestamp: new Date().toISOString()
-        });
-    }, [theme, isDark]);
 
     const scale = useSharedValue(1);
     const translateX = useSharedValue(0);
@@ -400,6 +391,10 @@ export default function ProductDetailScreen() {
                 {renderImageGallery()}
                 {renderProductInfo()}
             </ScrollView>
+            <TouchableOpacity style={styles.writeButton} onPress={() => router.push(`/reviews/${product._id}`)}>
+                <Ionicons name="create-outline" size={20} color="#fff" />
+                <Text style={styles.writeButtonText}>Xem đánh giá</Text>
+            </TouchableOpacity>
         </SafeAreaProvider>
     );
 }
@@ -409,6 +404,29 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
         flex: 1,
         backgroundColor: theme.background,
         paddingTop: 50,
+    },
+    writeButton: {
+        position: 'absolute',
+        bottom: 20,
+        right: 20,
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: theme.primary,
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+        borderRadius: 25,
+        elevation: 5,
+        shadowColor: theme.text,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        gap: 8,
+    },
+
+    writeButtonText: {
+        color: '#fff',
+        fontSize: 15,
+        fontWeight: '600',
     },
 
     // Header Styles
