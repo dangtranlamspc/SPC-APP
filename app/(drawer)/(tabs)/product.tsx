@@ -227,6 +227,7 @@ export default function ProductListScreen() {
   const ProductCard = React.memo(({ item }: { item: Product }) => {
     const { toggleFavourite, isFavourite } = useFavourite();
     const [localFavouriteState, setLocalFavouriteState] = useState<boolean | null>(null);
+    const [showNewBadge, setShowNewBadge] = useState(false);
 
     const styles = createStyles(theme, isDark);
 
@@ -245,6 +246,16 @@ export default function ProductListScreen() {
         return () => clearTimeout(timer);
       }
     }, [isFavouriteFromContext]);
+
+    useEffect(() => {
+      if (item.isMoi) {
+        setShowNewBadge(true);
+        const timer = setTimeout(() => {
+          setShowNewBadge(false)
+        },5000)
+        return () => clearTimeout(timer)
+      }
+    },[item.isMoi])
 
     const firstImage = useMemo(() => {
       return Array.isArray(item.images) && item.images.length > 0
@@ -312,7 +323,7 @@ export default function ProductListScreen() {
               <Text style={styles.placeholderText}>No Image</Text>
             </View>
           )}
-          {item.isMoi && (
+          {item.isMoi && showNewBadge && (
             <Animated.View style={[styles.newBadge, { transform: [{ scale: scaleAnim }] }]}>
               <Text style={styles.newText}>MỚI</Text>
             </Animated.View>

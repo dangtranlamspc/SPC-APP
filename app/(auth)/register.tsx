@@ -23,7 +23,7 @@ export default function RegisterPage() {
     password: '',
   });
   
-  const { register } = useAuth();
+  const { register, login } = useAuth();
   const router = useRouter();
 
   const handleInputChange = (field: string, value: string) => {
@@ -61,8 +61,11 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await register(formData.name, formData.email, formData.password);
+
+      await login(formData.email, formData.password);
+
       Alert.alert('Thành công', 'Đăng ký thành công!', [
-        { text: 'OK', onPress: () => router.replace('/(auth)/login') }
+        { text: 'OK', onPress: () => router.replace('/(drawer)/(tabs)/home') }
       ]);
     } catch (error: any) {
       Alert.alert('Lỗi', error.message || 'Đăng ký thất bại');

@@ -7,6 +7,7 @@ import {
     Image,
     Modal,
     ScrollView,
+    Share,
     StatusBar,
     StyleSheet,
     Text,
@@ -17,6 +18,7 @@ import {
 import HtmlDescription from '@/components/HtmlDescription';
 import { useProduct } from '@/contexts/ProductContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { BASE_URL } from '@env';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -27,6 +29,7 @@ export default function ProductDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const { getProduct } = useProduct();
     const { theme, isDark } = useTheme();
+
     const [loading, setLoading] = useState(true);
     const [product, setProduct] = useState<any>(null);
     const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0);
@@ -34,12 +37,14 @@ export default function ProductDetailScreen() {
     const [isImageModalVisible, setIsImageModalVisible] = useState(false);
     const [modalImageIndex, setModalImageIndex] = useState(0);
 
-    const [refreshKey, setRefreshKey] = useState(0);
+    const styles = createStyles(theme, isDark);
 
-    useEffect(() => {
-        setRefreshKey(prev => prev + 1);
-    }, [isDark, theme]);
 
+
+    const containerStyle = {
+        flex: 1,
+        backgroundColor: theme.background, // Inline style
+    };
 
     useEffect(() => {
         if (!id) return;
@@ -144,8 +149,6 @@ export default function ProductDetailScreen() {
         ],
     }));
 
-    const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
-
     if (loading) {
         return (
             <SafeAreaView style={styles.container}>
@@ -198,6 +201,18 @@ export default function ProductDetailScreen() {
         return typeof image === 'string' ? image : image.url || '';
     };
 
+    const handleShare = async () => {
+        try {
+            await Share.share({
+                title: product.name,
+                message: `${product.name}\n\nXem chi tiết sản phẩm tại: ${BASE_URL}/product/${product._id}`,
+                url: `${BASE_URL}/product/${product._id}`, // (trên iOS sẽ ưu tiên field này)
+            });
+        } catch (error: any) {
+            console.error('Error sharing:', error);
+        }
+    };
+
     const renderHeader = () => {
         return (
             <View style={styles.header}>
@@ -210,7 +225,7 @@ export default function ProductDetailScreen() {
                 </Text>
 
                 <View style={styles.headerActions}>
-                    <TouchableOpacity style={styles.headerActionButton}>
+                    <TouchableOpacity onPress={handleShare} style={styles.headerActionButton}>
                         <Ionicons name="share-outline" size={20} color={theme.textSecondary} />
                     </TouchableOpacity>
                 </View>
@@ -376,7 +391,7 @@ export default function ProductDetailScreen() {
     };
 
     return (
-        <SafeAreaProvider key={`${refreshKey}-${isDark}}`} style={styles.container}>
+        <SafeAreaProvider style={styles.container}>
             <StatusBar
                 barStyle={isDark ? "light-content" : "dark-content"}
                 backgroundColor={theme.background}

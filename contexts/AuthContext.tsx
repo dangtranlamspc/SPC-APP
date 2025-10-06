@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [token, setToken] = useState<string | null>(null);
-
+    
     useEffect(() => {
         checkAuthStatus();
     }, [])

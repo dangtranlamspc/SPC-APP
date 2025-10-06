@@ -141,13 +141,15 @@ const NotificationsScreen = () => {
     fetchNotifications();
   }, []);
 
-  const filteredNotifications = notifications.filter(notif => {
-    switch (filter) {
-      case 'unread': return !notif.isRead;
-      case 'read': return notif.isRead;
-      default: return true;
-    }
-  });
+  const filteredNotifications = Array.isArray(notifications)
+    ? notifications.filter(notif => {
+      switch (filter) {
+        case 'unread': return !notif.isRead;
+        case 'read': return notif.isRead;
+        default: return true;
+      }
+    })
+    : [];
 
   if (loading && notifications.length === 0) {
     return (
@@ -212,16 +214,16 @@ const NotificationsScreen = () => {
             {filter === 'unread'
               ? 'Bạn đã đọc tất cả thông báo'
               : filter === 'read'
-              ? 'Chưa có thông báo nào được đọc'
-              : 'Chưa có thông báo nào'}
+                ? 'Chưa có thông báo nào được đọc'
+                : 'Chưa có thông báo nào'}
           </Text>
         </View>
       ) : (
         <ScrollView
           style={styles.scrollView}
           refreshControl={
-            <RefreshControl 
-              refreshing={refreshing} 
+            <RefreshControl
+              refreshing={refreshing}
               onRefresh={refreshNotifications}
               tintColor={theme.primary}
               colors={[theme.primary]}

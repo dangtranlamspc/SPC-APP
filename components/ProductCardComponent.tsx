@@ -22,7 +22,8 @@ export default function ProductNewComponent() {
   }, [isDark, theme]);
 
 
-  const ProductCard = React.memo(({ item, theme, isDark }: { item: Product, theme : any, isDark : boolean }) => {
+  const ProductCard = React.memo(({ item, theme, isDark }: { item: Product, theme: any, isDark: boolean }) => {
+    const [showNewBadge, setShowNewBadge] = useState(false);
     const firstImage = useMemo(() => {
       return Array.isArray(item.images) && item.images.length > 0
         ? (typeof item.images[0] === 'string' ? item.images[0] : item.images[0].url)
@@ -32,6 +33,16 @@ export default function ProductNewComponent() {
     const handleProductPress = useCallback(() => {
       router.push(`/product/${item._id}`);
     }, [item._id]);
+
+    useEffect(() => {
+      if (item.isMoi) {
+        setShowNewBadge(true);
+        const timer = setTimeout(() => {
+          setShowNewBadge(false)
+        }, 5000)
+        return () => clearTimeout(timer)
+      }
+    }, [item.isMoi])
 
     return (
       <TouchableOpacity
@@ -52,7 +63,7 @@ export default function ProductNewComponent() {
               <Text style={styles.placeholderText}>No Image</Text>
             </View>
           )}
-          {item.isMoi && (
+          {item.isMoi && showNewBadge && (
             <View style={styles.newBadge}>
               <Text style={styles.newBadgeText}>MỚI</Text>
             </View>

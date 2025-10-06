@@ -35,7 +35,7 @@ export default function ProductReviewComponent () {
 
             const data = await response.json();
 
-            if (data.success) {
+            if (data.success) {;
                 setReviews(data.data.reviews);
                 setStats(data.data.stats);
             }

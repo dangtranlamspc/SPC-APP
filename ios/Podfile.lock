@@ -5,12 +5,15 @@ PODS:
     - ExpoModulesCore
   - EXConstants (18.0.9):
     - ExpoModulesCore
+  - EXImageLoader (6.0.0):
+    - ExpoModulesCore
+    - React-Core
   - EXJSONUtils (0.15.0)
   - EXManifests (1.0.8):
     - ExpoModulesCore
-  - EXNotifications (0.32.11):
+  - EXNotifications (0.32.12):
     - ExpoModulesCore
-  - Expo (54.0.10):
+  - Expo (54.0.12):
     - ExpoModulesCore
     - hermes-engine
     - RCTRequired
@@ -39,15 +42,15 @@ PODS:
     - ExpoModulesCore
   - ExpoBlur (15.0.7):
     - ExpoModulesCore
-  - ExpoDevice (8.0.8):
+  - ExpoDevice (8.0.9):
     - ExpoModulesCore
-  - ExpoFileSystem (19.0.15):
+  - ExpoFileSystem (19.0.16):
     - ExpoModulesCore
   - ExpoFont (14.0.8):
     - ExpoModulesCore
   - ExpoHaptics (15.0.7):
     - ExpoModulesCore
-  - ExpoHead (6.0.8):
+  - ExpoHead (6.0.10):
     - ExpoModulesCore
     - RNScreens
   - ExpoImage (3.0.8):
@@ -57,6 +60,8 @@ PODS:
     - SDWebImageAVIFCoder (~> 0.11.0)
     - SDWebImageSVGCoder (~> 1.7.0)
     - SDWebImageWebPCoder (~> 0.14.6)
+  - ExpoImagePicker (17.0.8):
+    - ExpoModulesCore
   - ExpoKeepAwake (15.0.7):
     - ExpoModulesCore
   - ExpoLinearGradient (15.0.7):
@@ -65,7 +70,7 @@ PODS:
     - ExpoModulesCore
   - ExpoLocalAuthentication (17.0.7):
     - ExpoModulesCore
-  - ExpoModulesCore (3.0.18):
+  - ExpoModulesCore (3.0.20):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -119,10 +124,10 @@ PODS:
     - ExpoModulesCore
   - ExpoSystemUI (6.0.7):
     - ExpoModulesCore
-  - ExpoWebBrowser (15.0.7):
+  - ExpoWebBrowser (15.0.8):
     - ExpoModulesCore
   - EXStructuredHeaders (5.0.0)
-  - EXUpdates (29.0.11):
+  - EXUpdates (29.0.12):
     - EASClient
     - EXManifests
     - ExpoModulesCore
@@ -2193,6 +2198,7 @@ DEPENDENCIES:
   - EASClient (from `../node_modules/expo-eas-client/ios`)
   - EXApplication (from `../node_modules/expo-application/ios`)
   - EXConstants (from `../node_modules/expo-constants/ios`)
+  - EXImageLoader (from `../node_modules/expo-image-loader/ios`)
   - EXJSONUtils (from `../node_modules/expo-json-utils/ios`)
   - EXManifests (from `../node_modules/expo-manifests/ios`)
   - EXNotifications (from `../node_modules/expo-notifications/ios`)
@@ -2205,6 +2211,7 @@ DEPENDENCIES:
   - ExpoHaptics (from `../node_modules/expo-haptics/ios`)
   - ExpoHead (from `../node_modules/expo-router/ios`)
   - ExpoImage (from `../node_modules/expo-image/ios`)
+  - ExpoImagePicker (from `../node_modules/expo-image-picker/ios`)
   - ExpoKeepAwake (from `../node_modules/expo-keep-awake/ios`)
   - ExpoLinearGradient (from `../node_modules/expo-linear-gradient/ios`)
   - ExpoLinking (from `../node_modules/expo-linking/ios`)
@@ -2316,6 +2323,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-application/ios"
   EXConstants:
     :path: "../node_modules/expo-constants/ios"
+  EXImageLoader:
+    :path: "../node_modules/expo-image-loader/ios"
   EXJSONUtils:
     :path: "../node_modules/expo-json-utils/ios"
   EXManifests:
@@ -2340,6 +2349,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-router/ios"
   ExpoImage:
     :path: "../node_modules/expo-image/ios"
+  ExpoImagePicker:
+    :path: "../node_modules/expo-image-picker/ios"
   ExpoKeepAwake:
     :path: "../node_modules/expo-keep-awake/ios"
   ExpoLinearGradient:
@@ -2528,31 +2539,33 @@ SPEC CHECKSUMS:
   EASClient: de38c20c1dd9af7ff435afdc8b2c9b7c20d46767
   EXApplication: a9d1c46d473d36f61302a9a81db2379441f3f094
   EXConstants: 59d46d25b89f88cc38291a56dbce4d550758f72d
+  EXImageLoader: e501c001bc40b8326605e82e6e80363c80fe06b5
   EXJSONUtils: 1d3e4590438c3ee593684186007028a14b3686cd
   EXManifests: 7469efed75d694ce3c43a6da9c6f3886f66d3c26
-  EXNotifications: a9eb811deeb51fb8e50ef45569be6ffab3994648
-  Expo: 3d042ea779f0053cce219e99a5d80ff5e87a986e
+  EXNotifications: 7aab54f0e5f3023122bc95699eaff7c52bacb559
+  Expo: dddfac8aa1ebd553785b02b5e6631c800313ec48
   ExpoAsset: 3c3b7dd9b1318846a02ef05ce420e63d542aeb9f
   ExpoBlur: b5b7a26572b3c33a11f0b2aa2f95c17c4c393b76
-  ExpoDevice: 123dfe3fc8ef2b9e169982280d27d68bdd1e824c
-  ExpoFileSystem: 72fef9c5cb92b9995eeee114a14acb66d94d5bd4
+  ExpoDevice: d85d332b903b658a596f166b01fee12ca1e443ff
+  ExpoFileSystem: 86f029bfb474f194ce861ba697364f661b578d64
   ExpoFont: d3e56c7cc03d9fd113b90a5513ad32b4bf46b0ff
   ExpoHaptics: b48d913e7e5f23816c6f130e525c9a6501b160b5
-  ExpoHead: 511ab91efdcf6b04fdfe76fc83931bb4c0956b09
+  ExpoHead: 5c4e84af3fb4dbb1d7672f17500cc5c1f148aa3c
   ExpoImage: 306dd755c842dba9f3ee654c51834a9cc657e6ca
+  ExpoImagePicker: bd0a5c81d7734548f6908a480609257e85d19ea8
   ExpoKeepAwake: 3f5e3ac53627849174f3603271df8e08f174ed4a
   ExpoLinearGradient: f9e7182e5253d53b2de4134b69d70bbfc2d50588
   ExpoLinking: f5c171877e118e792cb9a77e5ade0b080d899b14
   ExpoLocalAuthentication: 8f11d958b956fa372c0a49975f54ed1dc617ae1d
-  ExpoModulesCore: f35e51bd73613b2d3556c5c7d13f2f42f58b1ea9
+  ExpoModulesCore: b9c17ef5c208549022fef93618c84385dca8e47a
   ExpoScreenOrientation: d762490d3d7857fbaddd61f418744f85f6458db1
   ExpoSecureStore: f44dee1354536bdb3d7fab8cc451ee737c41beca
   ExpoSplashScreen: 9d2ff8fa08f2c00336a83f93bebffed3a8312519
   ExpoSymbols: ef7b8ac77ac2d496b1bc3f0f7daf5e19c3a9933a
   ExpoSystemUI: 5e7fbe4b716edb9e3a7bc0441e4a3b6b1f9eb1ea
-  ExpoWebBrowser: 4f0dc52a559027cc0fba6920adc19a7604e2733d
+  ExpoWebBrowser: 51218ce6ef35ea769e33409aac87fea3df4b919d
   EXStructuredHeaders: c951e77f2d936f88637421e9588c976da5827368
-  EXUpdates: da3449da91dcc344bb0efe2f1acb091df97c0091
+  EXUpdates: ef3bdc2cd2a1e023c3ade1b68a1491ff8e4768c8
   EXUpdatesInterface: 1436757deb0d574b84bba063bd024c315e0ec08b
   FBLazyVector: 9e0cd874afd81d9a4d36679daca991b58b260d42
   hermes-engine: 35c763d57c9832d0eef764316ca1c4d043581394

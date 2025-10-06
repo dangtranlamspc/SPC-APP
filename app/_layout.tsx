@@ -8,6 +8,7 @@ import { ProductNNDTProvider } from '@/contexts/ProductNNDTContext';
 import { SliderProvider } from '@/contexts/SliderContext';
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
 import { ThuVienProvider } from '@/contexts/ThuVienContext';
+import { useNotifications } from '@/hooks/useNotifications';
 import { Stack } from 'expo-router';
 import React, { useEffect } from 'react';
 import { Platform, StatusBar } from 'react-native';
@@ -15,6 +16,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import "../global.css";
 
 function AppContent() {
+    useNotifications();
   const { theme, isDark } = useTheme();
 
   useEffect(() => {
@@ -48,6 +50,7 @@ function AppContent() {
       > 
         <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false}} />
+        <Stack.Screen name="product/[id]" options={{ headerShown: false }} />
         {/* <Stack.Screen name="productbycategory/[id]" options={{ headerShown: false }} /> */}
       </Stack>
     </GestureHandlerRootView>
@@ -55,7 +58,8 @@ function AppContent() {
 }
 export default function RootLayout() {
   return (
-    <ThemeProvider>
+    <GestureHandlerRootView style={{flex : 1}}>
+      <ThemeProvider>
       <AuthProvider>
         <ProductProvider>
           <FavouriteProvider>
@@ -85,5 +89,6 @@ export default function RootLayout() {
         </ProductProvider>
       </AuthProvider>
     </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }

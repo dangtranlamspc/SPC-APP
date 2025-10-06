@@ -1,5 +1,5 @@
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import { ThemeProvider, useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { Ionicons } from "@expo/vector-icons";
 import { DrawerContentScrollView, DrawerItem } from "@react-navigation/drawer";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -369,11 +369,9 @@ function DrawerLayoutContent() {
 
 export default function DrawerLayout() {
   return (
-    <ThemeProvider>
       <AuthProvider>
         <DrawerLayoutContent />
       </AuthProvider>
-    </ThemeProvider>
   );
 }
 

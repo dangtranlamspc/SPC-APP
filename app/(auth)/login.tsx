@@ -1,8 +1,9 @@
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useTheme } from '@/contexts/ThemeContext';
+import { Ionicons } from '@expo/vector-icons';
 import * as LocalAuthentication from "expo-local-authentication";
 import { Link, useRouter } from 'expo-router';
 import * as SecureStore from "expo-secure-store";
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -18,9 +19,9 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function LoginPage() {
+  const { theme, isDark } = useTheme();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [hasToken, setHasToken] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -29,15 +30,7 @@ export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    // Check token đã lưu chưa
-    (async () => {
-      const token = await SecureStore.getItemAsync("token");
-      if (token) {
-        setHasToken(true);
-      }
-    })();
-  }, []);
+  const styles = createStyles(theme, isDark);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -108,26 +101,26 @@ export default function LoginPage() {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-indigo-600"
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
         scrollEnabled={false}
-        className="flex-1"
-        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24 }}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View className="bg-white/10 backdrop-blur-lg rounded-3xl p-6 border border-white/20 shadow-2xl">
-
-          <View className="mb-4">
-            <View className="flex-row items-center bg-white/10 rounded-2xl border border-white/20">
-              <View className="p-4">
-                <Ionicons name="mail-outline" size={20} color="rgba(255,255,255,0.7)" />
+        <View style={styles.formCard}>
+          {/* Email Input */}
+          <View style={styles.inputGroup}>
+            <View style={styles.inputContainer}>
+              <View style={styles.iconContainer}>
+                <Ionicons name="mail-outline" size={20} color={theme.textSecondary} />
               </View>
               <TextInput
-                className="flex-1 p-4 text-white text-16 font-medium"
+                style={styles.input}
                 placeholder="Email"
-                placeholderTextColor="rgba(255,255,255,0.6)"
+                placeholderTextColor={theme.textSecondary}
                 value={formData.email}
                 onChangeText={(text) => handleInputChange('email', text)}
                 keyboardType="email-address"
@@ -136,28 +129,29 @@ export default function LoginPage() {
             </View>
           </View>
 
-          <View className="mb-6">
-            <View className="flex-row items-center bg-white/10 rounded-2xl border border-white/20">
-              <View className="p-4">
-                <Ionicons name="lock-closed-outline" size={20} color="rgba(255,255,255,0.7)" />
+          {/* Password Input */}
+          <View style={styles.inputGroup}>
+            <View style={styles.inputContainer}>
+              <View style={styles.iconContainer}>
+                <Ionicons name="lock-closed-outline" size={20} color={theme.textSecondary} />
               </View>
               <TextInput
-                className="flex-1 p-4 text-white text-16 font-medium"
+                style={styles.input}
                 placeholder="Mật khẩu"
-                placeholderTextColor="rgba(255,255,255,0.6)"
+                placeholderTextColor={theme.textSecondary}
                 value={formData.password}
                 onChangeText={(text) => handleInputChange('password', text)}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
               />
               <TouchableOpacity
-                className="p-4"
+                style={styles.iconContainer}
                 onPress={() => setShowPassword(!showPassword)}
               >
                 <Ionicons
                   name={showPassword ? "eye-off-outline" : "eye-outline"}
                   size={20}
-                  color="rgba(255,255,255,0.7)"
+                  color={theme.textSecondary}
                 />
               </TouchableOpacity>
             </View>
@@ -165,74 +159,159 @@ export default function LoginPage() {
 
           {/* Submit Button */}
           <TouchableOpacity
-            className={`bg-white rounded-2xl p-4 items-center mb-4 ${loading ? 'opacity-70' : 'active:scale-95'}`}
+            style={[styles.submitButton, loading && styles.submitButtonDisabled]}
             onPress={handleLogin}
             disabled={loading}
-            style={{ transform: [{ scale: 1 }] }}
           >
             {loading ? (
-              <ActivityIndicator color="#6366f1" size="small" />
+              <ActivityIndicator color={theme.card} size="small" />
             ) : (
-              <Text className="text-indigo-600 font-bold text-lg">
-                Đăng nhập
-              </Text>
+              <Text style={styles.submitButtonText}>Đăng nhập</Text>
             )}
           </TouchableOpacity>
-
-          {hasToken && (
-            <TouchableOpacity
-              onPress={handleBiometricLogin}
-              className="flex-row justify-center items-center bg-indigo-500 rounded-2xl p-4 mb-4"
-            >
-              {Platform.OS === "ios" ? (
-                <MaterialCommunityIcons name="face-recognition" size={22} color="#fff" style={{ marginRight: 8 }} />
-              ) : (
-                <Ionicons name="finger-print" size={22} color="#fff" style={{ marginRight: 8 }} />
-              )}
-              <Text className="text-white font-semibold">
-                Đăng nhập bằng {Platform.OS === "ios" ? "Face ID" : "Vân tay"}
-              </Text>
-            </TouchableOpacity>
-          )}
-
           {/* Switch Mode */}
-          <View className="items-center py-2">
-            <Text className="text-white/80 text-center">
+          <View style={styles.switchMode}>
+            <Text style={styles.switchModeText}>
               Chưa có tài khoản?{' '}
-              <Link href="/(auth)/register" className="text-white font-semibold">
-                Đăng ký ngay
-              </Link>
             </Text>
+            <Link href="/(auth)/register" style={styles.switchModeLink}>
+              <Text style={styles.switchModeLinkText}>Đăng ký ngay</Text>
+            </Link>
           </View>
         </View>
 
         {/* Footer */}
-        <Text className="text-white/60 text-center mt-8 text-sm">
+        <Text style={styles.footer}>
           Bằng cách tiếp tục, bạn đồng ý với{'\n'}
-          <Text className="text-white/80 font-medium">Điều khoản dịch vụ</Text> và{' '}
-          <Text className="text-white/80 font-medium">Chính sách bảo mật</Text>
+          <Text style={styles.footerBold}>Điều khoản dịch vụ</Text> và{' '}
+          <Text style={styles.footerBold}>Chính sách bảo mật</Text>
         </Text>
 
         <TouchableOpacity
-          className={`bg-white rounded-2xl p-4 mt-10 items-center mb-4 ${loading ? 'opacity-70' : 'active:scale-95'}`}
+          style={styles.homeButton}
           onPress={() => router.push('/(drawer)/(tabs)/home')}
-          disabled={loading}
-          style={{ transform: [{ scale: 1 }] }}
         >
-          <Text className="text-indigo-600 font-bold text-lg">
-            Về trang chủ
-          </Text>
+          <Text style={styles.homeButtonText}>Vào ngay</Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 };
 
-const styles = StyleSheet.create({
-  backButton: {
-    paddingTop: 50,
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: "fff",
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.background,
   },
-})
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: 24,
+  },
+  formCard: {
+    backgroundColor: theme.card,
+    borderRadius: 24,
+    padding: 24,
+    shadowColor: theme.text,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: theme.border,
+  },
+  iconContainer: {
+    padding: 16,
+  },
+  input: {
+    flex: 1,
+    padding: 16,
+    fontSize: 16,
+    color: theme.text,
+    fontWeight: '500',
+  },
+  submitButton: {
+    backgroundColor: theme.primary,
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  submitButtonDisabled: {
+    opacity: 0.7,
+  },
+  submitButtonText: {
+    color: theme.card,
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  biometricButton: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.primary,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+  },
+  biometricButtonText: {
+    color: theme.card,
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  switchMode: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  switchModeText: {
+    color: theme.textSecondary,
+    fontSize: 14,
+  },
+  switchModeLink: {
+    marginLeft: 4,
+  },
+  switchModeLinkText: {
+    color: theme.primary,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  footer: {
+    color: theme.textSecondary,
+    textAlign: 'center',
+    marginTop: 32,
+    fontSize: 13,
+  },
+  footerBold: {
+    fontWeight: '600',
+    color: theme.text,
+  },
+  homeButton: {
+    backgroundColor: theme.card,
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 40,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: theme.primary,
+  },
+  homeButtonText: {
+    color: theme.primary,
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+});

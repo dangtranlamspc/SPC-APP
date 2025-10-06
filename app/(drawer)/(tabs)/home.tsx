@@ -91,7 +91,6 @@ const HomeScreen: React.FC = () => {
         </TouchableOpacity>
 
         <Text style={styles.headerTitle}>Trang Chủ</Text>
-
         <TouchableOpacity onPress={() => router.push('/notification/notification')} style={styles.notificationButton}>
           <Ionicons
             name="notifications-outline"
@@ -104,9 +103,9 @@ const HomeScreen: React.FC = () => {
         onScroll={handleScroll} // Gắn handler vào ScrollView
         scrollEventThrottle={16}
         refreshControl={
-          <RefreshControl 
-            refreshing={refreshing} 
-            onRefresh={handleRefresh} 
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
             colors={[theme.primary]} // Android
             tintColor={theme.primary} // iOS
             progressBackgroundColor={theme.card} />
