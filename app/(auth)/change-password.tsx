@@ -1,4 +1,5 @@
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useCallback, useState } from "react";
@@ -25,48 +26,58 @@ const PasswordInput = ({
   field: keyof ChangePasswordFormData;
   label: string;
   placeholder: string;
-  value: string;
+  value: string; 
   onChangeText: (value: string) => void;
   secureTextEntry: boolean;
   onToggleVisibility: () => void;
   error?: string;
-}) => (
-  <View style={styles.inputContainer}>
-    <Text style={styles.label}>
-      {label}
-    </Text>
-    <View style={styles.inputWrapper}>
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        secureTextEntry={secureTextEntry}
-        placeholder={placeholder}
-        style={[
-          styles.textInput,
-          { borderColor: error ? "#ef4444" : "#d1d5db" }
-        ]}
-        autoCapitalize="none"
-        autoCorrect={false}
-      />
-      <TouchableOpacity
-        onPress={onToggleVisibility}
-        style={styles.eyeIcon}
-      >
-        <Ionicons
-          name={secureTextEntry ? 'eye' : 'eye-off'}
-          size={20}
-          color="#9CA3AF"
+}) => {
+  const { theme } = useTheme();
+  
+  return (
+    <View style={styles.inputContainer}>
+      <Text style={[styles.label, { color: theme.text }]}>
+        {label}
+      </Text>
+      <View style={styles.inputWrapper}>
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          secureTextEntry={secureTextEntry}
+          placeholder={placeholder}
+          placeholderTextColor={theme.textSecondary}
+          style={[
+            styles.textInput,
+            { 
+              backgroundColor: theme.card,
+              borderColor: error ? theme.error : theme.border,
+              color: theme.text
+            }
+          ]}
+          autoCapitalize="none"
+          autoCorrect={false}
         />
-      </TouchableOpacity>
+        <TouchableOpacity
+          onPress={onToggleVisibility}
+          style={styles.eyeIcon}
+        >
+          <Ionicons
+            name={secureTextEntry ? 'eye' : 'eye-off'}
+            size={20}
+            color={theme.textSecondary}
+          />
+        </TouchableOpacity>
+      </View>
+      {error && (
+        <Text style={[styles.errorText, { color: theme.error }]}>{error}</Text>
+      )}
     </View>
-    {error && (
-      <Text style={styles.errorText}>{error}</Text>
-    )}
-  </View>
-);
+  );
+};
 
 const ChangePasswordScreen = () => {
   const { changePassword, logout } = useAuth();
+  const { theme, isDark } = useTheme();
 
   const [formData, setFormData] = useState<ChangePasswordFormData>({
     oldPassword: '',
@@ -189,18 +200,26 @@ const ChangePasswordScreen = () => {
   }, []);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.content}>
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[
+          styles.header,
+          { 
+            backgroundColor: theme.surface,
+            borderBottomColor: theme.border
+          }
+        ]}>
           <TouchableOpacity
             onPress={() => router.back()}
             style={styles.backButton}
             disabled={loading}
           >
-            <Ionicons name="arrow-back" size={24} color="#374151" />
+            <Ionicons name="arrow-back" size={24} color={theme.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Đổi mật khẩu</Text>
+          <Text style={[styles.headerTitle, { color: theme.text }]}>
+            Đổi mật khẩu
+          </Text>
         </View>
 
         <ScrollView
@@ -245,19 +264,53 @@ const ChangePasswordScreen = () => {
             />
 
             {/* Security Tips */}
-            <View style={styles.securityTips}>
+            <View style={[
+              styles.securityTips,
+              { 
+                backgroundColor: isDark ? 'rgba(59, 130, 246, 0.1)' : '#EFF6FF',
+                borderColor: isDark ? 'rgba(59, 130, 246, 0.3)' : '#BFDBFE'
+              }
+            ]}>
               <View style={styles.securityTipsHeader}>
-                <Ionicons name="shield-checkmark" size={22} color="#3B82F6" />
-                <Text style={styles.securityTipsTitle}>
+                <Ionicons name="shield-checkmark" size={22} color={theme.primary} />
+                <Text style={[
+                  styles.securityTipsTitle,
+                  { color: isDark ? theme.primary : '#1E40AF' }
+                ]}>
                   Bảo mật mật khẩu
                 </Text>
               </View>
               <View>
-                <Text style={styles.tipText}>• Sử dụng ít nhất 8 ký tự</Text>
-                <Text style={styles.tipText}>• Kết hợp chữ hoa, chữ thường và số</Text>
-                <Text style={styles.tipText}>• Thêm ký tự đặc biệt (@, #, $, v.v.)</Text>
-                <Text style={styles.tipText}>• Không sử dụng thông tin cá nhân</Text>
-                <Text style={styles.tipText}>• Không chia sẻ mật khẩu với ai</Text>
+                <Text style={[
+                  styles.tipText,
+                  { color: isDark ? theme.textSecondary : '#1D4ED8' }
+                ]}>
+                  • Sử dụng ít nhất 8 ký tự
+                </Text>
+                <Text style={[
+                  styles.tipText,
+                  { color: isDark ? theme.textSecondary : '#1D4ED8' }
+                ]}>
+                  • Kết hợp chữ hoa, chữ thường và số
+                </Text>
+                <Text style={[
+                  styles.tipText,
+                  { color: isDark ? theme.textSecondary : '#1D4ED8' }
+                ]}>
+                  • Thêm ký tự đặc biệt (@, #, $, v.v.)
+                </Text>
+                <Text style={[
+                  styles.tipText,
+                  { color: isDark ? theme.textSecondary : '#1D4ED8' }
+                ]}>
+                  • Không sử dụng thông tin cá nhân
+                </Text>
+                <Text style={[
+                  styles.tipText,
+                  { color: isDark ? theme.textSecondary : '#1D4ED8' }
+                ]}>
+                  • Không chia sẻ mật khẩu với ai
+                </Text>
               </View>
             </View>
 
@@ -268,7 +321,11 @@ const ChangePasswordScreen = () => {
                 disabled={loading}
                 style={[
                   styles.submitButton,
-                  { backgroundColor: loading ? '#9CA3AF' : '#2563EB' }
+                  { 
+                    backgroundColor: loading 
+                      ? (isDark ? '#4B5563' : '#9CA3AF')
+                      : theme.primary
+                  }
                 ]}
               >
                 {loading ? (
@@ -287,10 +344,16 @@ const ChangePasswordScreen = () => {
 
               <TouchableOpacity
                 onPress={() => router.back()}
-                style={styles.cancelButton}
+                style={[
+                  styles.cancelButton,
+                  { 
+                    borderColor: theme.border,
+                    backgroundColor: theme.card
+                  }
+                ]}
                 disabled={loading}
               >
-                <Text style={styles.cancelButtonText}>
+                <Text style={[styles.cancelButtonText, { color: theme.text }]}>
                   Hủy
                 </Text>
               </TouchableOpacity>
@@ -305,7 +368,6 @@ const ChangePasswordScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
   },
   content: {
     flex: 1,
@@ -314,9 +376,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: 'white',
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
   },
   backButton: {
     marginRight: 16,
@@ -324,7 +384,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#111827',
   },
   scrollView: {
     flex: 1,
@@ -341,14 +400,12 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#374151',
     marginBottom: 8,
   },
   inputWrapper: {
     position: 'relative',
   },
   textInput: {
-    backgroundColor: 'white',
     borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: 16,
@@ -362,14 +419,11 @@ const styles = StyleSheet.create({
     top: 16,
   },
   errorText: {
-    color: '#EF4444',
     fontSize: 14,
     marginTop: 4,
   },
   securityTips: {
-    backgroundColor: '#EFF6FF',
     borderWidth: 1,
-    borderColor: '#BFDBFE',
     borderRadius: 12,
     padding: 16,
     marginBottom: 32,
@@ -380,12 +434,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   securityTipsTitle: {
-    color: '#1E40AF',
     fontWeight: '600',
     marginLeft: 8,
   },
   tipText: {
-    color: '#1D4ED8',
     fontSize: 14,
     marginBottom: 2,
   },
@@ -420,11 +472,8 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#D1D5DB',
-    backgroundColor: 'white',
   },
   cancelButtonText: {
-    color: '#374151',
     fontSize: 16,
     fontWeight: '500',
   },

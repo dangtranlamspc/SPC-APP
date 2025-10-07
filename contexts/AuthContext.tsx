@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [token, setToken] = useState<string | null>(null);
-    
+
     useEffect(() => {
         checkAuthStatus();
     }, [])
@@ -188,9 +188,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const getToken = async () => {
-        if (token) return token; // lấy từ state cho nhanh
-        const storedToken = await SecureStore.getItemAsync('token');
-        return storedToken;
+        try {
+            if (token) return token; // lấy từ state cho nhanh
+            const storedToken = await AsyncStorage.getItem('token');
+            console.log(storedToken)
+            if (storedToken) {
+                setToken(storedToken);
+            }
+
+            return storedToken;
+        } catch (error) {
+            console.error('❌ Get token error:', error);
+            return null;
+        }
     };
 
     const logout = async () => {

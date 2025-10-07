@@ -231,13 +231,10 @@ export default function ProductListScreen() {
 
     const styles = createStyles(theme, isDark);
 
-    // Get favourite status from context using the isFavourite function
     const isFavouriteFromContext = isFavourite(item._id);
 
-    // Use local state if available, otherwise use context
     const currentFavouriteState = localFavouriteState !== null ? localFavouriteState : isFavouriteFromContext;
 
-    // Reset local state when context updates
     useEffect(() => {
       if (localFavouriteState !== null) {
         const timer = setTimeout(() => {
@@ -277,14 +274,11 @@ export default function ProductListScreen() {
           return;
         }
 
-        // Optimistic update - cập nhật local state ngay lập tức
         const newFavouriteState = !currentFavouriteState;
         setLocalFavouriteState(newFavouriteState);
 
-        // Gọi API với productType
         await toggleFavourite(item._id, 'Product');
 
-        // Sau khi API thành công, reset local state để dùng context
         setTimeout(() => {
           setLocalFavouriteState(null);
         }, 100);
@@ -299,7 +293,6 @@ export default function ProductListScreen() {
           return;
         }
 
-        // Revert local state nếu có lỗi khác
         setLocalFavouriteState(currentFavouriteState);
       }
     }, [item._id, toggleFavourite, currentFavouriteState]);
