@@ -335,7 +335,7 @@ export default function ProductListScreen() {
             />
           </TouchableOpacity>
 
-          {item.average_rating && (
+          {item.average_rating != null && (
             <View style={styles.ratingBadge}>
               <Ionicons name="star" size={12} color="#fbbf24" />
               <Text style={styles.ratingText}>{item.average_rating}</Text>

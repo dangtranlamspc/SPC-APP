@@ -1,50 +1,154 @@
 import WriteReviewModal from "@/components/WriteReviewModal";
 import { Colors, useTheme } from "@/contexts/ThemeContext";
 import { Review, ReviewStats } from "@/types/reviews";
+import { getToken } from "@/utils/tokenManager";
 import { BASE_URL } from "@env";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function ProductReviewComponent () {
-    const {theme, isDark} = useTheme();
-    const { id } = useLocalSearchParams<{ id: string }>();
-    const [reviews, setReviews] = useState<Review[]>([]);
-    const [stats, setStats] = useState<ReviewStats | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [filterRating, setFilterRating] = useState<number | null>(null);
-    const [sortBy, setSortBy] = useState<'createdAt' | 'helpfulCount'>('createdAt');
-    const [showWriteReviewModal, setShowWriteReviewModal] = useState(false);
+type ProductType = 'Product' | 'ProductNongNghiepDoThi' | 'ProductConTrungGiaDung';
 
-    const styles = createStyles(theme);
+export default function ProductReviewComponent() {
+  const { theme, isDark } = useTheme();
+  const params = useLocalSearchParams();
+  const id = params.id as string;
+  const productType = (params.productType as ProductType) || 'Product'; // ✨ Lấy productType từ params, default là 'Product'
+  
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [stats, setStats] = useState<ReviewStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [filterRating, setFilterRating] = useState<number | null>(null);
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'highest' | 'lowest' | 'helpful'>('newest');
+  const [showWriteReviewModal, setShowWriteReviewModal] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
-    useEffect(() => {
-        fetchReviews();
-    },[filterRating, sortBy]);
+  const styles = createStyles(theme);
 
-    const fetchReviews = async () => {
-        try {
-            setLoading(true);
-            const query = new URLSearchParams({
-                ...(filterRating && { rating : filterRating.toString()}),
-                sortBy,
-            });
-            const response = await fetch(`${BASE_URL}/review/product/${id}?${query}`);
+  useEffect(() => {
+    fetchReviews(true);
+    fetchStats();
+  }, [filterRating, sortBy]);
 
-            const data = await response.json();
+  const fetchReviews = async (refresh = false) => {
+    try {
+      if (refresh) {
+        setPage(1);
+        setLoading(true);
+      }
 
-            if (data.success) {;
-                setReviews(data.data.reviews);
-                setStats(data.data.stats);
-            }
-        } catch (error) {
-            
+      const query = new URLSearchParams({
+        page: (refresh ? 1 : page).toString(),
+        limit: '10',
+        sort: sortBy,
+        ...(filterRating && { rating: filterRating.toString() }),
+      });
+
+      // ✨ Fix endpoint: /api/reviews/:productType/:productId
+      const response = await fetch(`${BASE_URL}/review/${productType}/${id}?${query}`);
+      const data = await response.json();
+
+      if (data.success) {
+        if (refresh) {
+          setReviews(data.data);
+        } else {
+          setReviews([...reviews, ...data.data]);
         }
+        
+        // Check if has more
+        const hasMoreData = data.pagination 
+          ? data.pagination.currentPage < data.pagination.totalPages 
+          : data.data.length >= 10;
+        setHasMore(hasMoreData);
+      }
+    } catch (error) {
+      console.error('Fetch reviews error:', error);
+      Alert.alert('Lỗi', 'Không thể tải đánh giá');
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const renderStars = (rating: number, size = 16) => {
+  const fetchStats = async () => {
+    try {
+      // ✨ Fix endpoint: /api/reviews/:productType/:productId/stats
+      const url = `${BASE_URL}/review/${productType}/${id}/stats`;
+      
+      const response = await fetch(url);
+      
+      // // Log response status
+      // console.log('📊 Stats response status:', response.status);
+      
+      // Check if response is ok
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('❌ Stats error response:', text);
+        return;
+      }
+
+      const data = await response.json();
+      // console.log('📊 Stats data:', data);
+
+      if (data.success) {
+        setStats({
+          averageRating: data.data.averageRating,
+          totalReviews: data.data.totalReviews,
+          distribution: Object.entries(data.data.breakdown).map(([rating, count]) => ({
+            _id: parseInt(rating),
+            count: count as number,
+          })),
+        });
+      }
+    } catch (error) {
+      console.error('❌ Fetch stats error:', error);
+    }
+  };
+
+  const handleMarkHelpful = async (reviewId: string, currentlyMarked: boolean) => {
+    try {
+      const token = await getToken();
+      
+      const response = await fetch(`${BASE_URL}/review/${reviewId}/helpful`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Update local state
+        setReviews(reviews.map(review => 
+          review._id === reviewId 
+            ? { 
+                ...review, 
+                helpfulCount: data.data.helpfulCount,
+                isHelpful: data.data.isMarkedHelpful 
+              }
+            : review
+        ));
+      } else {
+        Alert.alert('Lỗi', data.error || 'Không thể xử lý');
+      }
+    } catch (error) {
+      console.error('Mark helpful error:', error);
+      Alert.alert('Lỗi', 'Đã có lỗi xảy ra');
+    }
+  };
+
+  const loadMore = () => {
+    if (!loading && hasMore) {
+      setPage(page + 1);
+      fetchReviews(false);
+    }
+  };
+
+  const renderStars = (rating: number, size = 16) => {
     return (
       <View style={styles.starsRow}>
         {[1, 2, 3, 4, 5].map((star) => (
@@ -52,7 +156,7 @@ export default function ProductReviewComponent () {
             key={star}
             name={star <= rating ? 'star' : 'star-outline'}
             size={size}
-            color={theme.warning}
+            color="#FFA500"
           />
         ))}
       </View>
@@ -141,13 +245,21 @@ export default function ProductReviewComponent () {
 
         {/* Actions */}
         <View style={styles.reviewActions}>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={() => handleMarkHelpful(item._id, item.isHelpful || false)}
+          >
             <Ionicons
               name={item.isHelpful ? 'thumbs-up' : 'thumbs-up-outline'}
               size={18}
               color={item.isHelpful ? theme.primary : theme.textSecondary}
             />
-            <Text style={styles.actionText}>Hữu ích ({item.helpfulCount})</Text>
+            <Text style={[
+              styles.actionText,
+              item.isHelpful && { color: theme.primary, fontWeight: '600' }
+            ]}>
+              Hữu ích ({item.helpfulCount})
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -198,6 +310,8 @@ export default function ProductReviewComponent () {
         data={reviews}
         renderItem={renderReviewItem}
         keyExtractor={(item) => item._id}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.5}
         ListHeaderComponent={
           <>
             {renderRatingDistribution()}
@@ -206,29 +320,55 @@ export default function ProductReviewComponent () {
             <View style={styles.filtersContainer}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 <TouchableOpacity
-                  style={[styles.filterChip, sortBy === 'createdAt' && styles.filterChipActive]}
-                  onPress={() => setSortBy('createdAt')}
+                  style={[styles.filterChip, sortBy === 'newest' && styles.filterChipActive]}
+                  onPress={() => setSortBy('newest')}
                 >
                   <Text
                     style={[
                       styles.filterChipText,
-                      sortBy === 'createdAt' && styles.filterChipTextActive,
+                      sortBy === 'newest' && styles.filterChipTextActive,
                     ]}
                   >
                     Mới nhất
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.filterChip, sortBy === 'helpfulCount' && styles.filterChipActive]}
-                  onPress={() => setSortBy('helpfulCount')}
+                  style={[styles.filterChip, sortBy === 'helpful' && styles.filterChipActive]}
+                  onPress={() => setSortBy('helpful')}
                 >
                   <Text
                     style={[
                       styles.filterChipText,
-                      sortBy === 'helpfulCount' && styles.filterChipTextActive,
+                      sortBy === 'helpful' && styles.filterChipTextActive,
                     ]}
                   >
                     Hữu ích nhất
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.filterChip, sortBy === 'highest' && styles.filterChipActive]}
+                  onPress={() => setSortBy('highest')}
+                >
+                  <Text
+                    style={[
+                      styles.filterChipText,
+                      sortBy === 'highest' && styles.filterChipTextActive,
+                    ]}
+                  >
+                    Rating cao
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.filterChip, sortBy === 'lowest' && styles.filterChipActive]}
+                  onPress={() => setSortBy('lowest')}
+                >
+                  <Text
+                    style={[
+                      styles.filterChipText,
+                      sortBy === 'lowest' && styles.filterChipTextActive,
+                    ]}
+                  >
+                    Rating thấp
                   </Text>
                 </TouchableOpacity>
               </ScrollView>
@@ -246,6 +386,11 @@ export default function ProductReviewComponent () {
             </View>
           )
         }
+        ListFooterComponent={
+          loading && reviews.length > 0 ? (
+            <ActivityIndicator size="small" color={theme.primary} style={{ marginVertical: 20 }} />
+          ) : null
+        }
       />
 
       {/* Write Review Button */}
@@ -261,8 +406,10 @@ export default function ProductReviewComponent () {
         visible={showWriteReviewModal}
         onClose={() => setShowWriteReviewModal(false)}
         productId={id}
+        productType={productType} // ✨ Truyền productType vào modal
         onReviewSubmitted={() => {
-          fetchReviews();
+          fetchReviews(true);
+          fetchStats();
         }}
       />
     </SafeAreaView>
@@ -338,7 +485,7 @@ const createStyles = (theme: Colors) =>
     },
     progressFill: {
       height: '100%',
-      backgroundColor: theme.warning,
+      backgroundColor: '#FFA500',
       borderRadius: 4,
     },
     progressFillActive: {
@@ -395,10 +542,11 @@ const createStyles = (theme: Colors) =>
     avatar: {
       width: 40,
       height: 40,
-      borderRadius : 20,
+      borderRadius: 20,
       backgroundColor: theme.surface,
       justifyContent: 'center',
       alignItems: 'center',
+      overflow: 'hidden',
     },
     avatarImage: {
       width: 40,

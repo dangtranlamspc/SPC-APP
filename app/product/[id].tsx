@@ -334,11 +334,11 @@ export default function ProductDetailScreen() {
                 {product.category && (
                     <View style={styles.categoryBadge}>
                         <Ionicons name="pricetag-outline" size={12} color={theme.primary} />
-                        <Text style={styles.categoryBadgeText}>{product.category.name}</Text>
+                        <Text style={styles.categoryBadgeText}>{typeof product.category === 'object' ? product.category.name : product.category}</Text>
                     </View>
                 )}
 
-                {product.average_rating && (
+                {product.average_rating != null && (
                     <View style={styles.ratingContainer}>
                         <View style={styles.stars}>
                             {[...Array(5)].map((_, i) => (
@@ -351,7 +351,7 @@ export default function ProductDetailScreen() {
                             ))}
                         </View>
                         <Text style={styles.ratingText}>
-                            {product.average_rating} ({Math.floor(product.average_rating * 10)} đánh giá)
+                            {product.average_rating} ({product.rating_count ?? 0} đánh giá)
                         </Text>
                     </View>
                 )}

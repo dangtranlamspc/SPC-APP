@@ -18,10 +18,13 @@ import {
   View,
 } from 'react-native';
 
+type ProductType = 'Product' | 'ProductNongNghiepDoThi' | 'ProductConTrungGiaDung';
+
 interface WriteReviewModalProps {
   visible: boolean;
   onClose: () => void;
   productId: string;
+  productType: ProductType;
   onReviewSubmitted?: () => void;
 }
 
@@ -29,6 +32,7 @@ export default function WriteReviewModal({
   visible,
   onClose,
   productId,
+  productType,
   onReviewSubmitted,
 }: WriteReviewModalProps) {
   const { theme } = useTheme();
@@ -62,11 +66,11 @@ export default function WriteReviewModal({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`, // Add your auth token
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           productId,
-          productType: 'Product',
+          productType, // ✨ Gửi productType từ props
           rating,
           comment: comment.trim(),
           images: uploadedImages,
@@ -78,8 +82,10 @@ export default function WriteReviewModal({
       if (data.success) {
         Alert.alert('Thành công', 'Đánh giá của bạn đã được gửi!');
         resetForm();
-        onReviewSubmitted?.();
         onClose();
+        setTimeout(() => {
+          onReviewSubmitted?.(); // ✅ Gọi sau khi modal đóng
+        }, 400);
       } else {
         Alert.alert('Lỗi', data.error || 'Không thể gửi đánh giá');
       }
@@ -92,14 +98,57 @@ export default function WriteReviewModal({
   };
 
   const uploadImages = async (imageUris: string[]) => {
-    // Implement your image upload logic here
+    // TODO: Implement your image upload logic here
+    // Upload to Cloudinary, AWS S3, or your server
     // Return array of { url, imageId }
-    return imageUris.map((uri) => ({ url: uri, imageId: Date.now().toString() }));
+
+    try {
+      // Example with FormData upload
+      const uploadedImages = await Promise.all(
+        imageUris.map(async (uri) => {
+          const formData = new FormData();
+          formData.append('image', {
+            uri,
+            type: 'image/jpeg',
+            name: `review_${Date.now()}.jpg`,
+          } as any);
+
+          // Uncomment and modify with your upload endpoint
+          // const response = await fetch(`${BASE_URL}/upload`, {
+          //   method: 'POST',
+          //   body: formData,
+          //   headers: {
+          //     'Content-Type': 'multipart/form-data',
+          //     Authorization: `Bearer ${await getToken()}`,
+          //   },
+          // });
+          // const data = await response.json();
+          // return { url: data.url, imageId: data.imageId };
+
+          // Temporary: return local URIs (replace with actual upload)
+          return { url: uri, imageId: Date.now().toString() };
+        })
+      );
+
+      return uploadedImages;
+    } catch (error) {
+      console.error('Upload images error:', error);
+      Alert.alert('Lỗi', 'Không thể tải ảnh lên. Vui lòng thử lại.');
+      return [];
+    }
   };
 
   const pickImage = async () => {
     if (images.length >= 5) {
       Alert.alert('Giới hạn', 'Bạn chỉ có thể tải lên tối đa 5 ảnh');
+      return;
+    }
+
+    // Request permission
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (permissionResult.granted === false) {
+      Alert.alert('Quyền truy cập', 'Bạn cần cấp quyền truy cập thư viện ảnh để tiếp tục');
       return;
     }
 
@@ -172,7 +221,7 @@ export default function WriteReviewModal({
                   <Ionicons
                     name={star <= rating ? 'star' : 'star-outline'}
                     size={40}
-                    color={star <= rating ? theme.warning : theme.textSecondary}
+                    color={star <= rating ? '#FFA500' : theme.textSecondary}
                   />
                 </TouchableOpacity>
               ))}
@@ -248,7 +297,10 @@ export default function WriteReviewModal({
         {/* Submit Button */}
         <View style={styles.footer}>
           <TouchableOpacity
-            style={[styles.submitButton, (rating === 0 || comment.trim().length < 10 || loading) && styles.submitButtonDisabled]}
+            style={[
+              styles.submitButton,
+              (rating === 0 || comment.trim().length < 10 || loading) && styles.submitButtonDisabled
+            ]}
             onPress={handleSubmit}
             disabled={rating === 0 || comment.trim().length < 10 || loading}
           >
@@ -269,7 +321,7 @@ const createStyles = (theme: Colors) =>
     container: {
       flex: 1,
       backgroundColor: theme.background,
-      paddingTop: 60
+      paddingTop: 60,
     },
     header: {
       flexDirection: 'row',

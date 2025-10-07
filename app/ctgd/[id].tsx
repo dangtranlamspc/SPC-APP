@@ -348,6 +348,10 @@ export default function ProductDetailScreen() {
                 {renderImageGallery()}
                 {renderProductInfo()}
             </ScrollView>
+            <TouchableOpacity style={styles.writeButton} onPress={() => router.push(`/reviews/${product._id}`)}>
+                <Ionicons name="create-outline" size={20} color="#fff" />
+                <Text style={styles.writeButtonText}>Xem đánh giá</Text>
+            </TouchableOpacity>
         </SafeAreaProvider>
     );
 }
@@ -357,6 +361,30 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
         flex: 1,
         backgroundColor: theme.background,
         paddingTop: 50,
+    },
+
+    writeButton: {
+        position: 'absolute',
+        bottom: 20,
+        right: 20,
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: theme.primary,
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+        borderRadius: 25,
+        elevation: 5,
+        shadowColor: theme.text,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        gap: 8,
+    },
+
+    writeButtonText: {
+        color: '#fff',
+        fontSize: 15,
+        fontWeight: '600',
     },
 
     // Header Styles
