@@ -15,7 +15,7 @@ export default function ProductReviewComponent() {
   const { theme, isDark } = useTheme();
   const params = useLocalSearchParams();
   const id = params.id as string;
-  const productType = (params.productType as ProductType) || 'Product'; // ✨ Lấy productType từ params, default là 'Product'
+  const productType = (params.productType as ProductType) || 'Product';
   
   const [reviews, setReviews] = useState<Review[]>([]);
   const [stats, setStats] = useState<ReviewStats | null>(null);
@@ -406,7 +406,7 @@ export default function ProductReviewComponent() {
         visible={showWriteReviewModal}
         onClose={() => setShowWriteReviewModal(false)}
         productId={id}
-        productType={productType} // ✨ Truyền productType vào modal
+        productType={productType}
         onReviewSubmitted={() => {
           fetchReviews(true);
           fetchStats();

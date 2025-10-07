@@ -348,7 +348,13 @@ export default function ProductDetailScreen() {
                 {renderImageGallery()}
                 {renderProductInfo()}
             </ScrollView>
-            <TouchableOpacity style={styles.writeButton} onPress={() => router.push(`/reviews/${product._id}`)}>
+            <TouchableOpacity style={styles.writeButton} onPress={() => router.push({
+                pathname: '/reviews/[id]',
+                params: {
+                    id: product._id,
+                    productType: 'ProductConTrungGiaDung',
+                },
+            })}>
                 <Ionicons name="create-outline" size={20} color="#fff" />
                 <Text style={styles.writeButtonText}>Xem đánh giá</Text>
             </TouchableOpacity>
