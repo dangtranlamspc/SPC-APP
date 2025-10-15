@@ -223,7 +223,7 @@ export default function ProductReviewComponent() {
               {/* )} */}
             </View>
             <View>
-              <Text style={styles.userName}>{item.userId.name}</Text>
+              <Text style={styles.userName}>{item?.userId?.name || 'Người dùng ẩn danh'}</Text>
               <Text style={styles.reviewDate}>{timeAgo}</Text>
             </View>
           </View>

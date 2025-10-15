@@ -183,7 +183,7 @@ export default function BSCTDetailScreen({ }: BSCTDetailProps) {
                             <Text style={styles.statLabel}>Lượt thích</Text>
                         </View>
                     </View>
-                </View>
+                </View>-+
 
                 {/* Content */}
                 {bsct.description && (
